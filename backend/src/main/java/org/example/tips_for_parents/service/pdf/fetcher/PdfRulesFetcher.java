@@ -62,14 +62,12 @@ public class PdfRulesFetcher {
                 feedingRecommendationRules.add(withMonths("RULE", capitalize(bullet.replaceFirst(";$", ".")), null));
             }
 
-            // 2) отдельные утверждения
             for (RuleExtractionPattern ruleExtractionPattern : RULE_EXTRACTION_PATTERNS) {
                 String s = takeSentences(text, ruleExtractionPattern.anchor(), ruleExtractionPattern.sentences());
                 if (s != null)
                     feedingRecommendationRules.add(withMonths(ruleExtractionPattern.type(), capitalize(s.replaceFirst("^Поэтому\\s+", "")), ruleExtractionPattern.subject()));
             }
 
-            // 3) «С 7 мес желток, а с 8 мес пюре из рыбы 2 раза/нед вместо мясного блюда»
             String sched = sentenceAround(text, "вместо мясного блюда");
             if (sched != null) {
                 Matcher sm = SCHEDULE.matcher(sched);
@@ -114,7 +112,7 @@ public class PdfRulesFetcher {
         return s.getTextForRegion("left") + "\n" + s.getTextForRegion("right");
     }
 
-    static String clean(String raw) {
+    public String clean(String raw) {
         StringBuilder sb = new StringBuilder();
         for (String line : raw.split("\\R")) {
             String l = line.strip().replaceFirst("^-(\\s+|$)", "");
@@ -127,7 +125,7 @@ public class PdfRulesFetcher {
                 .strip();
     }
 
-    static String takeSentences(String text, String anchor, int n) {
+    public String takeSentences(String text, String anchor, int n) {
         int i = text.indexOf(anchor);
         if (i < 0) return null;
         Matcher m = STOP.matcher(text);
@@ -140,7 +138,7 @@ public class PdfRulesFetcher {
         return text.substring(i, end).strip();
     }
 
-    static String sentenceAround(String text, String phrase) {
+    public static String sentenceAround(String text, String phrase) {
         int i = text.indexOf(phrase);
         if (i < 0) return null;
         int start = 0;
@@ -153,7 +151,7 @@ public class PdfRulesFetcher {
         return text.substring(start, e.end()).strip();
     }
 
-    static String truncatedAt(String text, String anchor, String endPhrase) {
+   public static String truncatedAt(String text, String anchor, String endPhrase) {
         int i = text.indexOf(anchor);
         if (i < 0) return null;
         int j = text.indexOf(endPhrase, i);

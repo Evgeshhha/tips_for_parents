@@ -2,7 +2,7 @@ package org.example.tips_for_parents.service.pdf.parser;
 
 import lombok.NoArgsConstructor;
 import org.example.tips_for_parents.model.pdf.MonthlyWeightGain;
-import org.example.tips_for_parents.model.pdf.NumericRange;
+import org.example.tips_for_parents.model.records.NumericRange;
 import org.example.tips_for_parents.service.pdf.util.NumberParsingUtils;
 
 import java.util.ArrayList;

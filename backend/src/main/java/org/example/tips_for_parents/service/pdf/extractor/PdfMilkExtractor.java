@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.example.tips_for_parents.service.pdf.fetcher.PdfRulesFetcher.sentenceAround;
+
 @Component
 @RequiredArgsConstructor
 public class PdfMilkExtractor {
@@ -61,7 +63,7 @@ public class PdfMilkExtractor {
             String pageText = text.pageText(pdf, page.get());
             Matcher m = VOLUMES.matcher(pageText);
             if (m.find()) {
-                String sentence = PdfRulesFetcher.sentenceAround(pageText, "не должен превышать");
+                String sentence = sentenceAround(pageText, "не должен превышать");
                 String s = sentence != null ? sentence : m.group(0);
                 int after = Integer.parseInt(m.group(5));
                 vols.add(new MilkVolumeLimit(m.group(1) + " мес", Integer.parseInt(m.group(1)), Integer.parseInt(m.group(1)),

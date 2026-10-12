@@ -1,4 +1,4 @@
-package org.example.tips_for_parents.model.pdf;
+package org.example.tips_for_parents.model.records;
 
 public record NumericRange(double lo, double hi) {
     public static final NumericRange ZERO = new NumericRange(0, 0);
