@@ -1,7 +1,7 @@
 package org.example.tips_for_parents.service.pdf.util;
 
 import lombok.NoArgsConstructor;
-import org.example.tips_for_parents.model.records.NumericRange;
+import org.example.tips_for_parents.model.value.NumericRange;
 
 import java.util.Locale;
 import java.util.regex.Matcher;

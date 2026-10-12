@@ -1,4 +1,4 @@
-package org.example.tips_for_parents.model.records;
+package org.example.tips_for_parents.model.value;
 
 public record Nutrients(NumericRange energy, NumericRange protein, NumericRange fat, NumericRange carbs) {
 

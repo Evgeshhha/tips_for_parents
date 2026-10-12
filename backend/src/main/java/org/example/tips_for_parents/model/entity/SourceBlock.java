@@ -22,5 +22,5 @@ public class SourceBlock {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "document_id", nullable = false)
-    private SourceDocument documentId;
+    private SourceDocument document;
 }
