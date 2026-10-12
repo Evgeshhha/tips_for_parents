@@ -1,12 +1,9 @@
-package org.example.tips_for_parents.service.pdf;
+package org.example.tips_for_parents.service.pdf.util;
 
-/**
- * Грубая основа слова для сопоставления текста правил и названий строк таблицы без словарей:
- * «овощному»/«Овощное» -> «овощ», «каше»/«Каша» -> «каш», «рыбы»/«Рыбное» -> «рыб».
- */
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public final class TextNormalizationUtils {
-
-    private TextNormalizationUtils() {}
 
     public static String of(String word) {
         String w = word.toLowerCase();

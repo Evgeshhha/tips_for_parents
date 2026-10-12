@@ -1,36 +1,34 @@
-package org.example.tips_for_parents.service.pdf;
+package org.example.tips_for_parents.service.pdf.parser;
 
-import org.example.tips_for_parents.model.records.Range;
+import lombok.NoArgsConstructor;
+import org.example.tips_for_parents.model.pdf.FoodNutrientProfile;
+import org.example.tips_for_parents.model.pdf.NumericRange;
+import org.example.tips_for_parents.service.pdf.util.NumberParsingUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Таблица 7.4: пищевая ценность продуктов и блюд прикорма. Основание — «на 100 г» или указано в названии («Сливочное масло, 5 г»). */
+@NoArgsConstructor
 public final class NutrientTableParser {
-
-    public record Nutrient(String name, double basisAmount, String basisUnit,
-                           Range protein, Range fat, Range carbs, Range energy) {}
 
     private static final Pattern BASIS =
             Pattern.compile("^(.*?),\\s*(\\d+/\\d+|\\d+(?:[.,]\\d+)?)\\s*(г|мл|шт\\.?)\\s*$");
 
-    private NutrientTableParser() {}
-
-    public static List<Nutrient> parse(List<List<String>> rows) {
+    public static List<FoodNutrientProfile> parse(List<List<String>> rows) {
         int h = NutritionNormsParser.headerRow(rows, "белк");
         List<String> header = rows.get(h);
         int ip = NutritionNormsParser.col(header, "белк"), iff = NutritionNormsParser.col(header, "жир"),
                 ic = NutritionNormsParser.col(header, "углевод"), ie = NutritionNormsParser.col(header, "энергетическ");
 
-        List<Nutrient> out = new ArrayList<>();
+        List<FoodNutrientProfile> out = new ArrayList<>();
         for (int i = h + 1; i < rows.size(); i++) {
             List<String> r = rows.get(i);
-            String name = NumberParser.clean(r.get(0));
+            String name = NumberParsingUtils.clean(r.get(0));
             if (name.isEmpty()) continue;
-            Range p = NumberParser.parseRange(r.get(ip)), f = NumberParser.parseRange(r.get(iff)),
-                    c = NumberParser.parseRange(r.get(ic)), e = NumberParser.parseRange(r.get(ie));
+            NumericRange p = NumberParsingUtils.parseRange(r.get(ip)), f = NumberParsingUtils.parseRange(r.get(iff)),
+                    c = NumberParsingUtils.parseRange(r.get(ic)), e = NumberParsingUtils.parseRange(r.get(ie));
             if (p == null || f == null || c == null || e == null) continue;
 
             double basisAmount = 100;
@@ -41,7 +39,7 @@ public final class NutrientTableParser {
                 basisAmount = amount(m.group(2));
                 basisUnit = m.group(3).replace(".", "");
             }
-            out.add(new Nutrient(name, basisAmount, basisUnit, p, f, c, e));
+            out.add(new FoodNutrientProfile(name, basisAmount, basisUnit, p, f, c, e));
         }
         if (out.isEmpty()) throw new IllegalStateException("В таблице 7.4 не найдено ни одной строки");
         return out;
@@ -52,6 +50,6 @@ public final class NutrientTableParser {
             String[] p = s.split("/");
             return Double.parseDouble(p[0]) / Double.parseDouble(p[1]);
         }
-        return NumberParser.d(s);
+        return NumberParsingUtils.d(s);
     }
 }

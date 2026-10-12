@@ -1,9 +1,12 @@
-package org.example.tips_for_parents.service.pdf;
+package org.example.tips_for_parents.service.pdf.fetcher;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
+import org.example.tips_for_parents.model.pdf.RuleExtractionPattern;
+import org.example.tips_for_parents.model.pdf.FeedingRecommendationRule;
+import org.example.tips_for_parents.service.pdf.util.TextNormalizationUtils;
 import org.springframework.stereotype.Component;
 
 import java.awt.geom.Rectangle2D;
@@ -13,18 +16,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Достаёт из текста главы 5 PDF правила введения прикорма, ограничения, частоту замен и «необязательные» продукты.
- * Страницы двухколоночные: читаем левую половину, затем правую, склеиваем и чистим переносы.
- * Алгоритм проверен на реальном PDF (прототип на Python); Java-код не запускался.
- */
 @Component
 public class PdfRulesFetcher {
-
-    /** type: RULE | SCHEDULE | OPTIONAL | RESTRICTION; subject — основа слова (null = общее правило). */
-    public record Rule(String type, String text, String subject, Integer monthMin, Integer monthMax, String payload) {}
-
-    private record Pick(String type, String anchor, int sentences, String subject) {}
 
     private static final String MARKER = "следует соблюдать следующие правила:";
     private static final String END_MARKER = "Примерная схема назначения";
@@ -37,18 +30,16 @@ public class PdfRulesFetcher {
             "(?iu)а\\s+с\\s+(\\d+)\\s+мес\\s*[—–-]\\s*пюре\\s+из\\s+(\\p{L}+),\\s*которое\\s+следует\\s+давать\\s+"
                     + "(\\d+)\\s+раза?/нед\\s+вместо\\s+(\\p{L}+)\\s+блюда");
 
-    /** Отдельные утверждения вне маркированного списка: якорь -> сколько предложений взять. */
-    private static final List<Pick> PICKS = List.of(
-            new Pick("RULE", "Важно вводить прикорм", 2, null),
-            new Pick("RULE", "Поэтому детям, получающим прикорм", 1, null),
-            new Pick("RULE", "Вначале овощное пюре", 2, "овощ"),
-            new Pick("RULE", "Прикорм на основе злаков", 1, "каш"),
-            new Pick("RESTRICTION", "Неадаптированные кисломолочные напитки", 1, null),
-            new Pick("RESTRICTION", "С 8 мес жизни в рацион вводится детский творог", 1, null),
-            new Pick("RESTRICTION", "Цельное коровье молоко не может использоваться", 1, null));
+    private static final List<RuleExtractionPattern> RULE_EXTRACTION_PATTERNS = List.of(
+            new RuleExtractionPattern("RULE", "Важно вводить прикорм", 2, null),
+            new RuleExtractionPattern("RULE", "Поэтому детям, получающим прикорм", 1, null),
+            new RuleExtractionPattern("RULE", "Вначале овощное пюре", 2, "овощ"),
+            new RuleExtractionPattern("RULE", "Прикорм на основе злаков", 1, "каш"),
+            new RuleExtractionPattern("RESTRICTION", "Неадаптированные кисломолочные напитки", 1, null),
+            new RuleExtractionPattern("RESTRICTION", "С 8 мес жизни в рацион вводится детский творог", 1, null),
+            new RuleExtractionPattern("RESTRICTION", "Цельное коровье молоко не может использоваться", 1, null));
 
-    /** @param tablePage страница (с 1) с таблицей 5.1 — правила идут на ней и двух предыдущих/следующих. */
-    public List<Rule> extract(byte[] pdf, int tablePage) throws IOException {
+    public List<FeedingRecommendationRule> extract(byte[] pdf, int tablePage) throws IOException {
         try (PDDocument doc = Loader.loadPDF(pdf)) {
             StringBuilder raw = new StringBuilder();
             int first = Math.max(1, tablePage - 1);
@@ -56,9 +47,8 @@ public class PdfRulesFetcher {
             for (int p = first; p <= last; p++) raw.append('\n').append(twoColumnText(doc, p));
             String text = clean(raw.toString());
 
-            List<Rule> rules = new ArrayList<>();
+            List<FeedingRecommendationRule> feedingRecommendationRules = new ArrayList<>();
 
-            // 1) маркированный список «При назначении прикорма следует соблюдать следующие правила»
             int m = text.indexOf(MARKER);
             if (m < 0) throw new IllegalStateException("Не найден список правил («" + MARKER + "»)");
             int from = m + MARKER.length();
@@ -69,14 +59,14 @@ public class PdfRulesFetcher {
                 if (seg.isEmpty()) continue;
                 Matcher end = SENTENCE_END.matcher(seg);
                 String bullet = end.find() ? seg.substring(0, end.end()) : seg;   // отсекаем шум таблицы после пункта
-                rules.add(withMonths("RULE", capitalize(bullet.replaceFirst(";$", ".")), null));
+                feedingRecommendationRules.add(withMonths("RULE", capitalize(bullet.replaceFirst(";$", ".")), null));
             }
 
             // 2) отдельные утверждения
-            for (Pick pick : PICKS) {
-                String s = takeSentences(text, pick.anchor(), pick.sentences());
+            for (RuleExtractionPattern ruleExtractionPattern : RULE_EXTRACTION_PATTERNS) {
+                String s = takeSentences(text, ruleExtractionPattern.anchor(), ruleExtractionPattern.sentences());
                 if (s != null)
-                    rules.add(withMonths(pick.type(), capitalize(s.replaceFirst("^Поэтому\\s+", "")), pick.subject()));
+                    feedingRecommendationRules.add(withMonths(ruleExtractionPattern.type(), capitalize(s.replaceFirst("^Поэтому\\s+", "")), ruleExtractionPattern.subject()));
             }
 
             // 3) «С 7 мес желток, а с 8 мес пюре из рыбы 2 раза/нед вместо мясного блюда»
@@ -86,25 +76,29 @@ public class PdfRulesFetcher {
                 if (sm.find()) {
                     String payload = "{\"timesPerWeek\":" + sm.group(3) + ",\"replaces\":\""
                             + TextNormalizationUtils.of(sm.group(4)) + "\"}";
-                    rules.add(new Rule("SCHEDULE", sched, TextNormalizationUtils.of(sm.group(2)),
+                    feedingRecommendationRules.add(new FeedingRecommendationRule("SCHEDULE", sched, TextNormalizationUtils.of(sm.group(2)),
                             Integer.parseInt(sm.group(1)), null, payload));
                 }
             }
 
-            // 4) «Соки… целесообразно назначать лишь после введения всех…» — предложение обрывается переносом
-            //    колонки/страницы, поэтому берём текст до «введения всех» и честно помечаем многоточием
             String optional = truncatedAt(text, "Соки, учитывая их незначительную пищевую ценность", "введения всех");
-            if (optional != null) rules.add(new Rule("OPTIONAL", optional, "сок", null, null, null));
+            if (optional != null) feedingRecommendationRules.add(new FeedingRecommendationRule("OPTIONAL", optional, "сок", null, null, null));
 
-            if (rules.isEmpty()) throw new IllegalStateException("Правила не извлечены");
-            return rules;
+            if (feedingRecommendationRules.isEmpty()) throw new IllegalStateException("Правила не извлечены");
+            return feedingRecommendationRules;
         }
     }
 
-    private static Rule withMonths(String type, String text, String subject) {
+    public String pageText(byte[] pdf, int pageNumber) throws IOException {
+        try (PDDocument doc = Loader.loadPDF(pdf)) {
+            return clean(twoColumnText(doc, pageNumber));
+        }
+    }
+
+    private static FeedingRecommendationRule withMonths(String type, String text, String subject) {
         Matcher m = MONTHS.matcher(text);
-        if (!m.find()) return new Rule(type, text, subject, null, null, null);
-        return new Rule(type, text, subject, Integer.parseInt(m.group(1)),
+        if (!m.find()) return new FeedingRecommendationRule(type, text, subject, null, null, null);
+        return new FeedingRecommendationRule(type, text, subject, Integer.parseInt(m.group(1)),
                 m.group(2) != null ? Integer.parseInt(m.group(2)) : null, null);
     }
 
@@ -120,7 +114,6 @@ public class PdfRulesFetcher {
         return s.getTextForRegion("left") + "\n" + s.getTextForRegion("right");
     }
 
-    /** Склейка строк, удаление паразитных «- » в начале строк и переносов («неболь- шого» -> «небольшого»). */
     static String clean(String raw) {
         StringBuilder sb = new StringBuilder();
         for (String line : raw.split("\\R")) {
@@ -147,7 +140,6 @@ public class PdfRulesFetcher {
         return text.substring(i, end).strip();
     }
 
-    /** Предложение целиком вокруг фразы: от конца предыдущего до конца текущего. */
     static String sentenceAround(String text, String phrase) {
         int i = text.indexOf(phrase);
         if (i < 0) return null;
