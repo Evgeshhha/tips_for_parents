@@ -1,15 +1,16 @@
 package org.example.tips_for_parents.service.card;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.model.card.*;
 import org.example.tips_for_parents.model.entity.FeedingFact;
 import org.example.tips_for_parents.model.enums.ReviewStatus;
+import org.example.tips_for_parents.model.payload.*;
 import org.example.tips_for_parents.model.pdf.FeedingAgeCell;
 import org.example.tips_for_parents.model.pdf.FoodNutrientProfile;
 import org.example.tips_for_parents.model.value.NumericRange;
 import org.example.tips_for_parents.model.value.Nutrients;
-import org.example.tips_for_parents.model.value.Var;
+import org.example.tips_for_parents.model.value.VarSolve;
 import org.example.tips_for_parents.repository.FeedingFactRepository;
 import org.example.tips_for_parents.service.pdf.util.NumberParsingUtils;
 import org.example.tips_for_parents.service.pdf.util.TextNormalizationUtils;
@@ -31,36 +32,6 @@ import java.util.stream.IntStream;
 @Service
 @RequiredArgsConstructor
 public class MonthCardService {
-
-    public record Item(String name, String amount, String unit, Nutrients nutrients, long factId) {}
-    public record Hint(String text, long factId) {}
-    public record AllowedItem(String name, String amount, boolean newInPeriod, List<String> notes, long factId) {}
-    public record DayDish(String name, String amount, String unit, String tableRange, String vsTable, String amountPolicy,
-                          Nutrients nutrients, List<Item> addons, List<Hint> hints, long factId) {}
-    public record DayVariant(String title, String newProduct, String note, List<DayDish> dishes,
-                             Nutrients totals, Nutrients percentOfPrikormTarget,
-                             Nutrients dayTotalsWithMilk, Nutrients percentOfDailyNeed, List<String> noNutrientData) {}
-    public record Needs(String ageBand, double weightKg, String weightSource, Nutrients perKg, Nutrients perDay) {}
-    public record MilkInfo(String kind, String label, double volumeMl, String volumeSource,
-                           Nutrients per100ml, Nutrients perDay, String compositionSource) {}
-    public record TextFact(String text, long factId) {}
-    public record MonthCard(int month, String column, List<String> newInPeriod, List<AllowedItem> allowed,
-                            Needs needs, MilkInfo milk, Nutrients prikormTarget, List<DayVariant> exampleDay,
-                            List<TextFact> optional, List<TextFact> rules, List<TextFact> restrictions,
-                            List<String> notes, List<String> warnings) {}
-
-    record TablePayload(String unit, List<FeedingAgeCell> cells, List<String> footnotes) {}
-    record NormPayload(double energy, double protein, double fat, double carbs) {}
-    record GainPayload(NumericRange gramsPerDay) {}
-    record SchedulePayload(int timesPerWeek, String replaces) {}
-    record MilkPayload(double energy, double protein, double fat, double carbs) {}
-    record VolumePayload(int maxMl) {}
-
-    private record Row(FeedingFact fact, FeedingAgeCell cell, String unit, boolean isNew,
-                       String addonStem, List<String> notes) {
-        String label() { return fact.getValueText(); }
-    }
-    private record Weight(double kg, String source) {}
 
     private static final class Entry {
         final Row row;
@@ -120,13 +91,13 @@ public class MonthCardService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milkMl вне разумных пределов (0–2000)");
 
         Map<String, List<FeedingFact>> byType = repo.findByReviewStatusOrderById(ReviewStatus.APPROVED).stream()
-                .collect(Collectors.groupingBy(f -> f.getFactType()));
+                .collect(Collectors.groupingBy(FeedingFact::getFactType));
         List<String> warnings = new ArrayList<>();
 
         List<Row> rows = tableRows(month, byType.getOrDefault("TABLE_AGE", List.of()));
         if (rows.isEmpty())
             warnings.add("Нет утверждённых строк таблицы 5.1 для этого возраста — PDF не загружен или ждёт ревью");
-        String column = rows.isEmpty() ? null : rows.get(0).cell().age();
+        String column = rows.isEmpty() ? null : rows.getFirst().cell().age();
         List<AllowedItem> allowed = rows.stream()
                 .map(r -> new AllowedItem(r.label(), r.cell().amount(), r.isNew(), r.notes(), r.fact().getId())).toList();
         List<String> newInPeriod = rows.stream().filter(r -> r.isNew() && r.addonStem() == null).map(Row::label).toList();
@@ -246,7 +217,7 @@ public class MonthCardService {
                     else notes.add(fn);
                 }
             }
-            rows.add(new Row(f, cell, pl.unit(), cell.lo() == pl.cells().get(0).lo(), addonStem, notes));
+            rows.add(new Row(f, cell, pl.unit(), cell.lo() == pl.cells().getFirst().lo(), addonStem, notes));
         }
         return rows;
     }
@@ -340,14 +311,14 @@ public class MonthCardService {
 
         boolean calc = target != null;
         double[] fixed = new double[3];
-        List<Var> vars = new ArrayList<>();
+        List<VarSolve> varSolves = new ArrayList<>();
         List<Entry> varEntries = new ArrayList<>();
         for (Entry e : entries) {
             if (e.row == newRow || startOfFeeding) { e.amount = e.table.lo(); e.policy = POLICY_NEW; }
             else if (e.perUnit == null) { e.amount = e.typical(); e.policy = POLICY_NO_DATA; }
             else if (!calc) { e.amount = e.typical(); e.policy = POLICY_TABLE; }
             else {
-                vars.add(new Var(mid(e.perUnit), minPortionShare * e.table.hi(), e.table.hi(), e.typical()));
+                varSolves.add(new VarSolve(mid(e.perUnit), minPortionShare * e.table.hi(), e.table.hi(), e.typical()));
                 varEntries.add(e);
                 continue;
             }
@@ -356,13 +327,13 @@ public class MonthCardService {
                 for (int k = 0; k < 3; k++) fixed[k] += d[k] * e.amount;
             }
         }
-        if (!vars.isEmpty()) {
+        if (!varSolves.isEmpty()) {
             double[] t = {Math.max(target.protein().lo() - fixed[0], 0), Math.max(target.fat().lo() - fixed[1], 0),
                     Math.max(target.carbs().lo() - fixed[2], 0)};
-            double[] x = DaySolver.solve(vars, t, LAMBDA, SWEEPS);
+            double[] x = DaySolver.solve(varSolves, t, LAMBDA, SWEEPS);
             for (int i = 0; i < x.length; i++) {
                 Entry e = varEntries.get(i);
-                Var v = vars.get(i);
+                VarSolve v = varSolves.get(i);
                 double r = roundAmount(x[i], e.fraction);
                 e.amount = Math.min(v.hi(), Math.max(Math.min(v.lo(), v.hi()), r));
                 e.policy = POLICY_CALC;

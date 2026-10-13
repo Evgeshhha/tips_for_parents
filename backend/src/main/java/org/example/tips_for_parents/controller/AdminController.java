@@ -3,6 +3,7 @@ package org.example.tips_for_parents.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.example.tips_for_parents.model.entity.FeedingFact;
 import org.example.tips_for_parents.model.enums.ReviewStatus;
 import org.example.tips_for_parents.model.report.AutoReviewReport;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/admin")
 @Tag(name = "Админка: загрузка PDF и ревью фактов")
@@ -32,12 +34,6 @@ public class AdminController {
     private final SourceImportService ingest;
     private final AutoReviewService autoReview;
     private final FeedingFactRepository facts;
-
-    public AdminController(SourceImportService ingest, AutoReviewService autoReview, FeedingFactRepository facts) {
-        this.ingest = ingest;
-        this.autoReview = autoReview;
-        this.facts = facts;
-    }
 
     @Operation(summary = "Скачать и разобрать PDF программы, прогнать автоподтверждение",
             description = "Если файл не изменился (хеш) — пропускается. При изменении факты прежней версии получают SUPERSEDED, "

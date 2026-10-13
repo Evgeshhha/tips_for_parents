@@ -3,24 +3,23 @@ package org.example.tips_for_parents.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.model.card.MonthCard;
 import org.example.tips_for_parents.service.card.MonthCardService;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/months")
 @Tag(name = "Карточки месяцев")
 public class MonthController {
-
     private final MonthCardService service;
-
-    public MonthController(MonthCardService service) {
-        this.service = service;
-    }
 
     @Operation(summary = "Карточки всех месяцев (по умолчанию с 6 до 12)")
     @GetMapping
-    public List<MonthCardService.MonthCard> all(
+    public List<MonthCard> all(
             @Parameter(description = "Масса ребёнка, кг (по умолчанию — оценка по таблице 6.1)") @RequestParam(required = false) Double weightKg,
             @Parameter(description = "Масса при рождении, кг, для оценки массы (по умолчанию cards.birth-weight-kg)") @RequestParam(required = false) Double birthWeightKg,
             @Parameter(description = "Чем питается ребёнок: breast (грудное молоко) или formula (смесь 1)") @RequestParam(required = false, defaultValue = "breast") String milk,
@@ -33,7 +32,7 @@ public class MonthController {
                     + "Потребность = нормы на кг (приложение 1) × масса; из неё вычитается молоко/смесь; "
                     + "граммовки блюд рассчитываются по БЖУ (таблица 7.4) на остаток. В warnings — нехватка данных.")
     @GetMapping("/{month}")
-    public MonthCardService.MonthCard one(
+    public MonthCard one(
             @Parameter(description = "Возраст ребёнка в месяцах, 4–12") @PathVariable int month,
             @Parameter(description = "Масса ребёнка, кг") @RequestParam(required = false) Double weightKg,
             @Parameter(description = "Масса при рождении, кг") @RequestParam(required = false) Double birthWeightKg,
