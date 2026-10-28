@@ -1,4 +1,5 @@
 import ProductCard from './ProductCard.jsx';
+import './FeedingCalendar.css';
 
 export default function FeedingCalendar({ monthData }) {
   const days = monthData?.exampleDay ?? [];
@@ -12,11 +13,6 @@ export default function FeedingCalendar({ monthData }) {
 
   return (
     <section className="feeding-calendar" id="calendar">
-      <div className="calendar-topline">
-        <div>
-          <h2>План месяца</h2>
-        </div>
-      </div>
 
       <div className="legend">
         <span>

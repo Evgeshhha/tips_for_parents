@@ -1,3 +1,30 @@
+import './ProductCard.css';
+import vegetablePuree from "../assets/images/ovoji.png";
+import fruitPuree from "../assets/images/fuits.png";
+import porridge from "../assets/images/kasha.png";
+import meatPuree from "../assets/images/maso.png";
+import fishPuree from "../assets/images/fish.png";
+import yolk from "../assets/images/egg.png";
+import babyCookies from "../assets/images/cooky.png";
+import bread from "../assets/images/bread.png";
+import kefir from "../assets/images/milk.png";
+import cottageCheese from "../assets/images/tvorog.png";
+import juice from "../assets/images/juse.png";
+
+const dishImages = {
+  "Овощное пюре": vegetablePuree,
+  "Фруктовое пюре": fruitPuree,
+  "Мясное пюре промышленного производства/отварное мясо": meatPuree,
+  "Рыбное пюре": fishPuree,
+  "Каша": porridge,
+  "Желток": yolk,
+  "Печенье детское": babyCookies,
+  "Хлеб пшеничный, сухари": bread,
+  "Кефир и другие детские неадаптированные кисломолочные напитки": kefir,
+  "Творог": cottageCheese,
+  "Фруктовый сок": juice,
+};
+
 const nutrientLabels = [
   ['energy', 'ккал', 'Энергия'],
   ['protein', 'г', 'Белки'],
@@ -38,16 +65,27 @@ function DishRow({ dish, day }) {
 
   return (
     <div className={className}>
+
+        {dishImages[dish.name] && (
+          <div className="dish-image-wrapper">
+            <img
+              className="dish-image"
+              src={dishImages[dish.name]}
+              alt={dish.name}
+              loading="lazy"
+            />
+          </div>
+        )}
+
       <div className="dish-main">
         <div className="dish-name-line">
           <strong>{dish.name}</strong>
-          <span className={`type-pill ${type}`}>
-            {type === 'new'
-              ? 'Новый продукт'
-              : type === 'addition'
-                ? 'Добавка'
-                : 'В рационе'}
-          </span>
+
+          {type !== 'new' && (
+            <span className={`type-pill ${type}`}>
+              {type === 'addition' ? 'Добавка' : 'В рационе'}
+            </span>
+          )}
         </div>
 
         <div className="dish-amount">
@@ -94,9 +132,13 @@ function DishRow({ dish, day }) {
 export default function ProductCard({ day, index }) {
   const isRestDay = !day.newProduct;
 
-  const title =
-    day.title ||
-    (day.newProduct ? `Новый продукт: ${day.newProduct}` : 'День без новых продуктов');
+    const title =
+      day.title ||
+      (day.newProduct
+        ? `Новый продукт: ${day.newProduct}`
+        : 'День без новых продуктов');
+
+    const displayTitle = title.replace(/День/gi, 'Этап');
 
   const mainDish =
     day.dishes?.find((dish) => dish.name === day.newProduct) ?? day.dishes?.[0];
@@ -107,7 +149,9 @@ export default function ProductCard({ day, index }) {
         <div>
           <span className="day-number">{String(index + 1).padStart(2, '0')}</span>
           <div>
-            <h3>{title.replace(/^Новый продукт:\s*/i, 'Новый продукт — ')}</h3>
+            <h3>
+              {displayTitle.replace(/^Новый продукт:*\s*\*/i, 'Новый продукт — ')}
+            </h3>
           </div>
         </div>
       </header>
@@ -128,9 +172,9 @@ export default function ProductCard({ day, index }) {
         <div className="day-totals">
           <strong>Итого по указанным блюдам</strong>
           <span>{displayRange(day.totals.energy)} ккал</span>
-          <span>Б {displayRange(day.totals.protein)} г</span>
-          <span>Ж {displayRange(day.totals.fat)} г</span>
-          <span>У {displayRange(day.totals.carbs)} г</span>
+          <span>Б:  {displayRange(day.totals.protein)} г</span>
+          <span>Ж:  {displayRange(day.totals.fat)} г</span>
+          <span>У:  {displayRange(day.totals.carbs)} г</span>
         </div>
       )}
     </article>

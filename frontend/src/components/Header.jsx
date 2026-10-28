@@ -1,4 +1,5 @@
 import profileIcon from "../assets/icons/icon_profile.png";
+import './Header.css';
 export default function Header() {
   return (
     <header className="site-header">

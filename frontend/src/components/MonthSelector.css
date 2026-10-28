@@ -1,0 +1,358 @@
+/* ===== Сайдбар ===== */
+.sidebar {
+  position: static;
+  align-self: start;
+}
+
+.month-selector {
+  width: 100%;
+  padding: 24px 20px;
+  background: #fffaf3;
+  border: 1px solid #e7d8c8;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+/* Заголовок */
+.month-selector h3 {
+  font-size: 20px;
+  margin: 0 0 20px;
+  color: #4f3021;
+}
+
+/* Список месяцев */
+.month-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Кнопка месяца */
+.month-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid #e7d8c8;
+  border-radius: 16px;
+  background: #fffdf9;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.month-option:hover {
+  border-color: #c7a58b;
+  transform: translateY(-1px);
+}
+
+.month-option.selected {
+  background: var(--brown);
+  border-color: var(--brown);
+  color: #fff;
+}
+
+/* Иконка */
+.month-icon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Название месяца */
+.month-option-copy strong {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.month-option-copy strong {
+  display: block;
+  font-size: 15px;
+}
+
+.month-option-copy small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+/* Стрелка */
+.month-chevron {
+  margin-left: auto;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.sidebar-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 18px;
+  padding: 20px 18px;
+
+  background: #fffaf3;
+  border: 1px solid #e7d8c8;
+  border-radius: 18px;
+
+  color: #6f5d50;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+/* Иконка листика */
+.sidebar-note > span {
+  font-size: 27px;
+  line-height: 2.6;
+}
+
+/* Текст примечания */
+.sidebar-note p {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+
+.sidebar-note strong {
+  font-weight: 600;
+}
+
+
+/* ===== Адаптив: планшеты ===== */
+@media (max-width: 1000px) {
+  .top-nav {
+    gap: 12px;
+  }
+
+  .brand {
+    min-width: 190px;
+  }
+
+  .content-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .hero-art {
+    width: 160px;
+    min-width: 160px;
+    height: 110px;
+  }
+
+  .day-card-header h3 {
+    font-size: 15px;
+  }
+}
+
+/* ===== Адаптив: мобильные ===== */
+@media (max-width: 760px) {
+  .site-header {
+    height: auto;
+    min-height: 68px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand strong {
+    font-size: 20px;
+  }
+
+  .top-nav {
+    order: 3;
+    width: 100%;
+    overflow: auto;
+    gap: 20px;
+  }
+
+  .top-nav a {
+    padding: 8px 0 5px;
+    white-space: nowrap;
+  }
+
+  .header-icon {
+    margin-left: auto;
+  }
+
+  .page-container {
+    padding: 22px 14px;
+  }
+
+  .page-hero {
+    align-items: flex-start;
+  }
+
+  .hero-art {
+    width: 90px;
+    min-width: 90px;
+    height: 82px;
+    font-size: 43px;
+  }
+
+  .hero-art span {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .source-notice {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .month-selector {
+    padding: 12px;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-option {
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+    padding: 8px 4px;
+  }
+
+  .month-option-copy small {
+    display: none;
+  }
+
+  .month-chevron {
+    display: none;
+  }
+
+  .month-emoji {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sidebar-note {
+    display: none;
+  }
+
+  .month-heading h2 {
+    font-size: 28px;
+  }
+
+  .month-counter {
+    font-size: 10px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ===== Адаптив: маленькие экраны ===== */
+@media (max-width: 460px) {
+  .page-hero h1 {
+    font-size: 29px;
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-heading {
+    align-items: flex-start;
+  }
+
+  .month-counter {
+    padding: 6px 8px;
+  }
+
+  .day-card-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .day-card-header > div {
+    gap: 8px;
+  }
+
+  .day-number {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .day-card-header h3 {
+    font-size: 14px;
+  }
+
+  .day-status {
+    font-size: 9px;
+    padding: 5px 7px;
+  }
+
+  .dish-list {
+    padding: 3px 7px;
+  }
+
+  .dish-row {
+    padding: 10px 9px;
+  }
+
+  .dish-name-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .nutrients {
+    gap: 3px;
+  }
+
+  .nutrients > div {
+    padding-left: 5px;
+  }
+
+  .nutrients span {
+    font-size: 9px;
+  }
+
+  .nutrients strong {
+    font-size: 11px;
+  }
+
+  .advice-section {
+    padding: 13px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .month-navigation button {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+}

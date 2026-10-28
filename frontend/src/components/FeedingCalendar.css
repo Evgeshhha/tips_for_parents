@@ -1,0 +1,365 @@
+/* ===== Календарь прикорма ===== */
+.feeding-calendar {
+  min-width: 0;
+}
+
+.calendar-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendar-topline h2 {
+  font: 700 22px 'Playfair Display', serif;
+  color: var(--brown-dark);
+  margin: 0 0 4px;
+}
+
+.calendar-topline p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.days-count {
+  white-space: nowrap;
+  padding: 7px 10px;
+  background: #f0e5d9;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #78573e;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  margin: 20px 0 24px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #49382e;
+}
+
+.legend-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.new-dot {
+  background: #dc8a70;
+}
+
+.addition-dot {
+  background: #e7c66e;
+}
+
+.continuation-dot {
+  background: #8aa879;
+}
+.data-note {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f5eee5;
+  border: 1px solid #eadbcb;
+  font-size: 11px;
+  color: #79614e;
+  line-height: 1.55;
+}
+
+.data-note ul {
+  margin: 7px 0 0;
+  padding-left: 17px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 35px 18px;
+  border: 1px dashed #d8c6b4;
+  border-radius: 16px;
+  color: #7c6a5a;
+}
+
+.empty-state span {
+  font-size: 34px;
+}
+
+.empty-state h3 {
+  font: 700 18px 'Playfair Display', serif;
+  margin: 8px 0;
+}
+
+.empty-state p {
+  font-size: 12px;
+  margin: 0;
+}
+
+.month-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.month-navigation button {
+  border: 1px solid #ddcbb9;
+  border-radius: 22px;
+  background: #fffaf3;
+  color: #76543b;
+  padding: 10px 15px;
+  font-size: 11px;
+}
+
+.month-navigation button:last-child {
+  background: var(--brown);
+  color: white;
+  border-color: var(--brown);
+}
+
+.month-navigation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== Адаптив: планшеты ===== */
+@media (max-width: 1000px) {
+  .top-nav {
+    gap: 12px;
+  }
+
+  .brand {
+    min-width: 190px;
+  }
+
+  .content-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .hero-art {
+    width: 160px;
+    min-width: 160px;
+    height: 110px;
+  }
+
+  .day-card-header h3 {
+    font-size: 15px;
+  }
+}
+
+/* ===== Адаптив: мобильные ===== */
+@media (max-width: 760px) {
+  .site-header {
+    height: auto;
+    min-height: 68px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand strong {
+    font-size: 20px;
+  }
+
+  .top-nav {
+    order: 3;
+    width: 100%;
+    overflow: auto;
+    gap: 20px;
+  }
+
+  .top-nav a {
+    padding: 8px 0 5px;
+    white-space: nowrap;
+  }
+
+  .header-icon {
+    margin-left: auto;
+  }
+
+  .page-container {
+    padding: 22px 14px;
+  }
+
+  .page-hero {
+    align-items: flex-start;
+  }
+
+  .hero-art {
+    width: 90px;
+    min-width: 90px;
+    height: 82px;
+    font-size: 43px;
+  }
+
+  .hero-art span {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .source-notice {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .month-selector {
+    padding: 12px;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-option {
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+    padding: 8px 4px;
+  }
+
+  .month-option-copy small {
+    display: none;
+  }
+
+  .month-chevron {
+    display: none;
+  }
+
+  .month-emoji {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sidebar-note {
+    display: none;
+  }
+
+  .month-heading h2 {
+    font-size: 28px;
+  }
+
+  .month-counter {
+    font-size: 10px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ===== Адаптив: маленькие экраны ===== */
+@media (max-width: 460px) {
+  .page-hero h1 {
+    font-size: 29px;
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-heading {
+    align-items: flex-start;
+  }
+
+  .month-counter {
+    padding: 6px 8px;
+  }
+
+  .day-card-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .day-card-header > div {
+    gap: 8px;
+  }
+
+  .day-number {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .day-card-header h3 {
+    font-size: 14px;
+  }
+
+  .day-status {
+    font-size: 9px;
+    padding: 5px 7px;
+  }
+
+  .dish-list {
+    padding: 3px 7px;
+  }
+
+  .dish-row {
+    padding: 10px 9px;
+  }
+
+  .dish-name-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .nutrients {
+    gap: 3px;
+  }
+
+  .nutrients > div {
+    padding-left: 5px;
+  }
+
+  .nutrients span {
+    font-size: 9px;
+  }
+
+  .nutrients strong {
+    font-size: 11px;
+  }
+
+  .advice-section {
+    padding: 13px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .month-navigation button {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+}
