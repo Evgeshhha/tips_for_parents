@@ -1,0 +1,567 @@
+/* ===== Карточки дней ===== */
+.dish-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+/* Рамка изображения блюда */
+.dish-image-wrapper {
+  flex: 0 0 150px;
+  width: 150px;
+  height: 125px;
+  box-sizing: border-box;
+
+  overflow: hidden;
+  border: 2px solid #d8b99b;
+  border-radius: 16px;
+
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(90, 62, 39, 0.12);
+}
+
+/* Изображение внутри рамки */
+.dish-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+.dish-main {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .dish-row {
+    flex-direction: column;
+  }
+
+  .dish-image-wrapper {
+    width: 100%;
+    height: 180px;
+    flex-basis: auto;
+  }
+}
+
+.day-card-list {
+  display: grid;
+  gap: 14px;
+}
+
+.day-card {
+  background: #FFFDFA;
+  border: 1px solid #E2D5C7;
+  border-radius: 17px;
+  overflow: hidden;
+  box-shadow: 0 5px 18px rgba(75, 52, 35, 0.08);
+}
+
+.day-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 17px;
+  background: #fff0e9;
+  border-bottom: 1px solid #f0ddd3;
+}
+
+.day-card-header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.day-number {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: #d9886d;
+  color: white;
+  display: grid;
+  place-items: center;
+  font: 700 17px 'Playfair Display', serif;
+  flex-shrink: 0;
+}
+
+.day-card-header .eyebrow {
+  margin-bottom: 4px;
+  color: #a86e57;
+  font-size: 9px;
+}
+
+.day-card-header h3 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: #583a2a;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.day-status {
+  white-space: nowrap;
+  padding: 6px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-new {
+  background: #f6d9cd;
+  color: #9e503b;
+}
+
+.status-rest {
+  background: #e7eedf;
+  color: #557246;
+}
+
+.rest-day-card .day-card-header {
+  background: #edf2e8;
+}
+
+.rest-day-card .day-number {
+  background: #799367;
+}
+
+/* ===== Строки блюд ===== */
+.dish-list {
+  padding: 4px 14px;
+}
+
+.dish-row {
+  padding: 12px 12px;
+  margin: 9px 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+.dish-new {
+  background: #fff0e9;
+  border-color: #f5d9cf;
+}
+
+.dish-addition {
+  background: #fff8df;
+  border-color: #f0e4b6;
+}
+
+.dish-continuation {
+  background: #edf4e8;
+  border-color: #dce8d4;
+}
+
+/* Название блюда */
+.dish-name-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dish-name-line > strong {
+  font-size: 16px;
+  line-height: 1.45;
+  color: #49392e;
+}
+
+/* Плашки категорий */
+.type-pill {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+
+.type-pill.addition {
+  background: #f2e4a8;
+  color: #846b24;
+}
+
+.type-pill.continuation {
+  background: #d9e7ce;
+  color: #527042;
+}
+
+/* Количество продукта */
+.dish-amount {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #76685d;
+  margin-top: 6px;
+}
+
+.dish-amount b {
+  font-size: 15px;
+  color: #49382d;
+}
+
+.range-note {
+  color: #8c796b;
+}
+
+/* КБЖУ: компактнее по расстояниям */
+.nutrients {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 9px;
+}
+
+.nutrients > div {
+  border-left: 2px solid rgba(120, 100, 80, 0.18);
+  padding-left: 6px;
+  min-width: 0;
+}
+
+.nutrients span {
+  display: block;
+  color: #78695d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nutrients strong {
+  display: block;
+  color: #49382d;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.nutrients small {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Рекомендации по количеству */
+.amount-policy {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #70563f;
+  margin: 8px 0 0;
+}
+
+/* Полезные подсказки */
+.product-hint {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5f4b37;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin: 8px 0 0;
+}
+
+/* Добавки к блюду */
+.addon-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 7px;
+  padding: 9px 10px;
+  background: #fff3c5;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #70581e;
+}
+
+.addon-line strong {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* Примечание к дню */
+.day-note {
+  margin: 12px 16px 0;
+  padding: 11px 13px;
+  background-color: #eaf2f8;
+  border: 1px solid #f0e2ad;
+  border-radius: 10px;
+  color: #6d5a38;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Итоговые показатели дня */
+.day-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 12px 17px;
+  border-top: 1px solid #eee3d8;
+  color: #6f5e51;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.day-totals strong {
+  color: #604633;
+}
+
+.source-details {
+  border-top: 1px solid #eee3d8;
+  padding: 10px 17px;
+  font-size: 11px;
+  color: #7b6a5d;
+}
+
+.source-details summary {
+  cursor: pointer;
+  color: #8a6247;
+  font-weight: 600;
+}
+
+.source-details p {
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+/* ===== Адаптив: планшеты ===== */
+@media (max-width: 1000px) {
+  .top-nav {
+    gap: 12px;
+  }
+
+  .brand {
+    min-width: 190px;
+  }
+
+  .content-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .hero-art {
+    width: 160px;
+    min-width: 160px;
+    height: 110px;
+  }
+
+  .day-card-header h3 {
+    font-size: 17px;
+  }
+}
+
+/* ===== Адаптив: мобильные ===== */
+@media (max-width: 760px) {
+  .site-header {
+    height: auto;
+    min-height: 68px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand strong {
+    font-size: 20px;
+  }
+
+  .top-nav {
+    order: 3;
+    width: 100%;
+    overflow: auto;
+    gap: 20px;
+  }
+
+  .top-nav a {
+    padding: 8px 0 5px;
+    white-space: nowrap;
+  }
+
+  .header-icon {
+    margin-left: auto;
+  }
+
+  .page-container {
+    padding: 22px 14px;
+  }
+
+  .page-hero {
+    align-items: flex-start;
+  }
+
+  .hero-art {
+    width: 90px;
+    min-width: 90px;
+    height: 82px;
+    font-size: 43px;
+  }
+
+  .hero-art span {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .source-notice {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .month-selector {
+    padding: 12px;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-option {
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+    padding: 8px 4px;
+  }
+
+  .month-option-copy small {
+    display: none;
+  }
+
+  .month-chevron {
+    display: none;
+  }
+
+  .month-emoji {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sidebar-note {
+    display: none;
+  }
+
+  .month-heading h2 {
+    font-size: 28px;
+  }
+
+  .month-counter {
+    font-size: 10px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ===== Адаптив: маленькие экраны ===== */
+@media (max-width: 460px) {
+  .page-hero h1 {
+    font-size: 29px;
+  }
+
+  .hero-art {
+    display: none;
+  }
+
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-heading {
+    align-items: flex-start;
+  }
+
+  .month-counter {
+    padding: 6px 8px;
+  }
+
+  .day-card-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .day-card-header > div {
+    gap: 8px;
+  }
+
+  .day-number {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .day-card-header h3 {
+    font-size: 16px;
+  }
+
+  .day-status {
+    font-size: 9px;
+    padding: 5px 7px;
+  }
+
+  .dish-list {
+    padding: 3px 7px;
+  }
+
+  .dish-row {
+    padding: 10px 9px;
+  }
+
+  .dish-name-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .nutrients {
+    gap: 3px;
+    margin-top: 8px;
+  }
+
+  .nutrients > div {
+    padding-left: 4px;
+  }
+
+  .nutrients span {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .nutrients strong {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .nutrients small {
+    font-size: 10px;
+  }
+
+  .advice-section {
+    padding: 13px;
+  }
+
+  .advice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .month-navigation button {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+}
