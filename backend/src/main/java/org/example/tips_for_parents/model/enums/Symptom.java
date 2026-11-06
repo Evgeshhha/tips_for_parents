@@ -1,0 +1,7 @@
+package org.example.tips_for_parents.model.enums;
+
+public enum Symptom {
+    RASH, REDNESS, HIVES, ITCHING, SWELLING,
+    VOMITING, DIARRHEA, CONSTIPATION, COLIC, BLOATING,
+    FOOD_REFUSAL, FUSSINESS, BREATHING_DIFFICULTY, LETHARGY, OTHER
+}
