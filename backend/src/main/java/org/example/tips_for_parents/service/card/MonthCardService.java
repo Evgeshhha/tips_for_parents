@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -79,6 +80,11 @@ public class MonthCardService {
     }
 
     public MonthCard card(int month, Double weightKg, Double birthWeightKg, String milkKind, Double milkMl) {
+        return card(month, weightKg, birthWeightKg, milkKind, milkMl, ChildContext.NONE);
+    }
+
+    public MonthCard card(int month, Double weightKg, Double birthWeightKg, String milkKind, Double milkMl,
+                          ChildContext child) {
         if (month < MIN_MONTH || month > MAX_MONTH)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Месяц должен быть от " + MIN_MONTH + " до " + MAX_MONTH);
@@ -102,6 +108,12 @@ public class MonthCardService {
                 .map(r -> new AllowedItem(r.label(), r.cell().amount(), r.isNew(), r.notes(), r.fact().getId())).toList();
         List<String> newInPeriod = rows.stream().filter(r -> r.isNew() && r.addonStem() == null).map(Row::label).toList();
 
+        List<String> skipped = rows.stream()
+                .filter(r -> r.addonStem() == null && child.unavailable().contains(productKey(r.label())))
+                .map(Row::label).toList();
+        if (!skipped.isEmpty())
+            warnings.add("Исключены из примерного дня по данным ребёнка (пауза или исключён): " + String.join(", ", skipped));
+
         Needs needs = needs(month, weightKg, birthWeightKg, byType, warnings);
         MilkInfo milk = needs == null ? null : milk(month, kind, milkMl, needs, byType, warnings);
         Nutrients target = needs == null ? null
@@ -113,7 +125,8 @@ public class MonthCardService {
 
         List<FeedingFact> optionalFacts = byType.getOrDefault("OPTIONAL", List.of());
         List<FeedingFact> subjectRules = byType.getOrDefault("RULE", List.of()).stream().filter(f -> f.getSubject() != null).toList();
-        List<Row> mains = rows.stream().filter(r -> r.addonStem() == null).toList();
+        List<Row> usableRows = rows.stream().filter(r -> !child.unavailable().contains(productKey(r.label()))).toList();
+        List<Row> mains = usableRows.stream().filter(r -> r.addonStem() == null).toList();
         List<Row> dayRows = mains.stream().filter(r -> optionalFor(r, optionalFacts) == null).toList();
         List<TextFact> optional = mains.stream().filter(r -> optionalFor(r, optionalFacts) != null)
                 .map(r -> new TextFact(r.label() + " — не входит в примерный день. Программа: " + optionalFor(r, optionalFacts).getSentence(),
@@ -123,8 +136,8 @@ public class MonthCardService {
                 .filter(s -> s.getValueMin() != null && month >= s.getValueMin()).findFirst().orElse(null);
         SchedulePayload sp = sched == null ? null : read(sched.getPayload(), SchedulePayload.class);
 
-        List<Row> established = dayRows.stream().filter(r -> !r.isNew()).toList();
-        List<Row> newRows = dayRows.stream().filter(Row::isNew).toList();
+        List<Row> established = dayRows.stream().filter(r -> !isNewFor(r, child)).toList();
+        List<Row> newRows = dayRows.stream().filter(r -> isNewFor(r, child)).toList();
         Nutrients milkDay = milk == null ? null : milk.perDay();
 
         List<DayVariant> day = new ArrayList<>();
@@ -133,7 +146,7 @@ public class MonthCardService {
                 String firstNote = x.notes().stream().filter(n -> n.toLowerCase().contains("первого")).findFirst()
                         .map(n -> "Таблица 5.1: «" + n + "» — этот день применим, если ребёнок уже получает другой прикорм")
                         .orElse(null);
-                day.add(variant("Новый продукт: " + x.label(), x.label(), firstNote, List.of(x), x, rows, nuts, needs,
+                day.add(variant("Новый продукт: " + x.label(), x.label(), firstNote, List.of(x), x, usableRows, nuts, needs,
                         target, milkDay, subjectRules, true));
             }
         } else if (!newRows.isEmpty()) {
@@ -145,7 +158,7 @@ public class MonthCardService {
                 if (replaced != null) dishes.remove(replaced);
                 dishes.add(x);
                 String note = replaced == null ? null : "Программа: " + sched.getSentence();
-                day.add(variant("Новый продукт: " + x.label(), x.label(), note, dishes, x, rows, nuts, needs, target,
+                day.add(variant("Новый продукт: " + x.label(), x.label(), note, dishes, x, usableRows, nuts, needs, target,
                         milkDay, subjectRules, false));
             }
         } else {
@@ -155,11 +168,11 @@ public class MonthCardService {
                 final Row f = fish;
                 final Row m = meat;
                 day.add(variant("День без новых продуктов, с мясным блюдом", null, null,
-                        established.stream().filter(r -> r != f).toList(), null, rows, nuts, needs, target, milkDay, subjectRules, false));
+                        established.stream().filter(r -> r != f).toList(), null, usableRows, nuts, needs, target, milkDay, subjectRules, false));
                 day.add(variant("День без новых продуктов, с рыбным блюдом", null, "Программа: " + sched.getSentence(),
-                        established.stream().filter(r -> r != m).toList(), null, rows, nuts, needs, target, milkDay, subjectRules, false));
+                        established.stream().filter(r -> r != m).toList(), null, usableRows, nuts, needs, target, milkDay, subjectRules, false));
             } else {
-                day.add(variant("День без новых продуктов", null, null, established, null, rows, nuts, needs, target,
+                day.add(variant("День без новых продуктов", null, null, established, null, usableRows, nuts, needs, target,
                         milkDay, subjectRules, false));
             }
         }
@@ -197,6 +210,32 @@ public class MonthCardService {
                 milk.volumeSource(), milk.per100ml(), milk.perDay().rounded(), milk.compositionSource());
         return new MonthCard(month, column, newInPeriod, allowed, dto, milkDto, target == null ? null : target.rounded(),
                 day, optional, rules, restrictions, notes, warnings);
+    }
+
+    /** Ключ продукта для персонализации: название строки таблицы 5.1 в нижнем регистре. */
+    public static String productKey(String label) {
+        return norm(label);
+    }
+
+    /** Продукты таблицы 5.1 из утверждённых фактов (без добавок вроде масла): ключ -> название. */
+    public Map<String, String> productCatalog() {
+        Map<String, String> res = new LinkedHashMap<>();
+        for (FeedingFact f : repo.findByReviewStatusOrderById(ReviewStatus.APPROVED)) {
+            if (!"TABLE_AGE".equals(f.getFactType()) || f.getValueText() == null) continue;
+            TablePayload pl = read(f.getPayload(), TablePayload.class);
+            if (pl == null) continue;
+            boolean addon = pl.footnotes() != null && pl.footnotes().stream().anyMatch(fn -> ADDON.matcher(fn).matches());
+            if (!addon) res.putIfAbsent(productKey(f.getValueText()), f.getValueText());
+        }
+        return res;
+    }
+
+    /** «Новый» для ребёнка: статус INTRODUCED -> привычный; NOT_STARTED/INTRODUCING -> новый; иначе по таблице 5.1. */
+    private static boolean isNewFor(Row r, ChildContext child) {
+        String key = productKey(r.label());
+        if (child.introduced().contains(key)) return false;
+        if (child.pending().contains(key)) return true;
+        return r.isNew();
     }
 
     private List<Row> tableRows(int month, List<FeedingFact> tableFacts) {
