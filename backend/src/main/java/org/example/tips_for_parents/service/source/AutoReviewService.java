@@ -24,7 +24,7 @@ public class AutoReviewService {
             f.setReviewStatus(ReviewStatus.APPROVED);
             f.setReviewedBy("AUTO");
             f.setReviewNote(switch (f.getFactType()) {
-                case "TABLE_AGE", "NORM", "NUTRIENT", "WEIGHT_GAIN", "MILK_COMPOSITION" ->
+                case "TABLE_AGE", "SLEEP_AGE", "NORM", "NUTRIENT", "WEIGHT_GAIN", "MILK_COMPOSITION" ->
                         "значения таблицы разобраны без ошибок";
                 default -> "текст взят из программы дословно";
             });

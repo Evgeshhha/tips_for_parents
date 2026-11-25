@@ -17,13 +17,13 @@ public class PlanController {
 
     private final PlanService plans;
 
-    @Operation(summary = "Активный персональный план: по месяцам итоги (потребность, молоко, цель) и примерные дни")
+    @Operation(summary = "Персональный план: по месяцам итоги и примерные дни")
     @GetMapping
     public PlanView active(@PathVariable UUID childId) {
         return plans.getActive(childId);
     }
 
-    @Operation(summary = "Пересчитать план вручную (создаёт новую версию)")
+    @Operation(summary = "Пересчитать план вручную")
     @PostMapping("/regenerate")
     public PlanView regenerate(@PathVariable UUID childId) {
         return plans.regenerate(childId, "manual regenerate");

@@ -6,11 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-
 import java.util.List;
 
 public interface FeedingFactRepository extends JpaRepository<FeedingFact, Long> {
     List<FeedingFact> findByReviewStatusOrderById(ReviewStatus status);
+    List<FeedingFact> findByFactTypeAndReviewStatusOrderById(String factType, ReviewStatus status);
     @Query("select f from FeedingFact f where f.block.document.id in "
             + "(select d.id from SourceDocument d where d.url = :url and d.id <> :docId) "
             + "and f.reviewStatus <> :superseded")

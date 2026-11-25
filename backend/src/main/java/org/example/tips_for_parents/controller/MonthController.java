@@ -17,7 +17,7 @@ import java.util.List;
 public class MonthController {
     private final MonthCardService service;
 
-    @Operation(summary = "Карточки всех месяцев (по умолчанию с 6 до 12)")
+    @Operation(summary = "Карточки всех месяцев")
     @GetMapping
     public List<MonthCard> all(
             @Parameter(description = "Масса ребёнка, кг (по умолчанию — оценка по таблице 6.1)") @RequestParam(required = false) Double weightKg,

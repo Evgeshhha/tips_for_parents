@@ -16,9 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RequiredArgsConstructor
-@RestController
 @RequestMapping("/api/admin")
-@Tag(name = "Админка: загрузка PDF и ревью фактов")
+@Tag(name = "Для админа: загрузка источника и подтвержение фактов")
 public class AdminController {
 
     public record FactView(Long id, String type, String subject, String valueText, Integer valueMin, Integer valueMax,
@@ -35,7 +34,7 @@ public class AdminController {
     private final AutoReviewService autoReview;
     private final FeedingFactRepository facts;
 
-    @Operation(summary = "Скачать и разобрать PDF программы, прогнать автоподтверждение",
+    @Operation(summary = "Скачать и разобрать PDF программы и страницу НМИЦ о режиме сна, прогнать автоподтверждение",
             description = "Если файл не изменился (хеш) — пропускается. При изменении факты прежней версии получают SUPERSEDED, "
                     + "ручные решения ревью переносятся на совпавшие факты. Ошибки — в поле status/notes отчёта.")
     @PostMapping("/refresh")
@@ -66,7 +65,7 @@ public class AdminController {
         return facts.findByReviewStatusOrderById(status).stream().map(FactView::of).toList();
     }
 
-    @Operation(summary = "Ручное решение по факту (перекрывает автоподтверждение)")
+    @Operation(summary = "Ручное решение по факту")
     @PostMapping("/facts/{id}/review")
     public FactView review(@PathVariable long id, @RequestParam ReviewStatus status,
                            @RequestParam(required = false) String note) {

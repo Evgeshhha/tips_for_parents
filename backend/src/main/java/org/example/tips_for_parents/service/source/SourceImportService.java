@@ -8,18 +8,20 @@ import org.example.tips_for_parents.model.entity.SourceDocument;
 import org.example.tips_for_parents.model.enums.ReviewStatus;
 import org.example.tips_for_parents.model.pdf.ExtractedBlockDraft;
 import org.example.tips_for_parents.model.pdf.PdfExtractionResult;
-import org.example.tips_for_parents.model.report.SourceImportReport;
 import org.example.tips_for_parents.model.report.RefreshReport;
+import org.example.tips_for_parents.model.report.SourceImportReport;
 import org.example.tips_for_parents.repository.FeedingFactRepository;
 import org.example.tips_for_parents.repository.SourceBlockRepository;
 import org.example.tips_for_parents.repository.SourceDocumentRepository;
 import org.example.tips_for_parents.service.pdf.extractor.PdfDataExtractor;
+import org.example.tips_for_parents.service.sleep.SleepPageExtractor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 public class SourceImportService {
     private final Downloader downloader;
     private final PdfDataExtractor pdfDataExtractor;
+    private final SleepPageExtractor sleepPageExtractor;
     private final SourceDocumentRepository sourceDocumentRepository;
     private final SourceBlockRepository sourceBlockRepository;
     private final FeedingFactRepository feedingFactRepository;
@@ -39,20 +42,32 @@ public class SourceImportService {
     private final TransactionTemplate tx;
     @Value("${sources.program-pdf-url}")
     private String pdfUrl;
+    @Value("${sources.sleep-page-url}")
+    private String sleepUrl;
 
     private volatile RefreshReport last;
 
     public RefreshReport refresh(String url) {
         String target = url != null && !url.isBlank() ? url : pdfUrl;
-        SourceImportReport report;
-        try {
-            report = ingestPdf(target);
-        } catch (Exception e) {
-            log.error("Ошибка загрузки источника {}", target, e);
-            report = new SourceImportReport("pdf", "ERROR", null, 0, List.of(String.valueOf(e.getMessage())));
-        }
-        last = new RefreshReport(List.of(report), autoReviewService.run());
+        List<SourceImportReport> reports = List.of(
+                runSource("pdf", target, () -> ingestPdf(target)),
+                runSource("sleep-page", sleepUrl, () -> ingestSleepPage(sleepUrl)));
+        last = new RefreshReport(reports, autoReviewService.run());
         return last;
+    }
+
+    @FunctionalInterface
+    private interface SourceTask {
+        SourceImportReport run() throws Exception;
+    }
+
+    private SourceImportReport runSource(String name, String url, SourceTask task) {
+        try {
+            return task.run();
+        } catch (Exception e) {
+            log.error("Ошибка загрузки источника {}", url, e);
+            return new SourceImportReport(name, "ERROR", null, 0, List.of(String.valueOf(e.getMessage())));
+        }
     }
 
     public RefreshReport lastRefresh() {
@@ -67,10 +82,23 @@ public class SourceImportService {
             return new SourceImportReport("pdf", "UNCHANGED", existing.get().getId(), 0, List.of());
 
         PdfExtractionResult ex = pdfDataExtractor.extract(pdf);        // вне транзакции
-        return tx.execute(st -> persist(url, hash, ex));
+        return tx.execute(st -> persist("pdf", url, hash, ex));
     }
 
-    private SourceImportReport persist(String url, String hash, PdfExtractionResult ex) {
+    /** HTML меняется даже без смены содержимого (скрипты, идентификаторы сборки), поэтому хеш — от извлечённого текста. */
+    private SourceImportReport ingestSleepPage(String url) throws Exception {
+        byte[] html = downloader.get(url);
+        PdfExtractionResult ex = sleepPageExtractor.extract(html, url);
+        String hash = Hashes.sha256(ex.blocks().stream()
+                .map(b -> b.heading() + "\n" + b.text()).collect(Collectors.joining("\n\n"))
+                .getBytes(StandardCharsets.UTF_8));
+        var existing = sourceDocumentRepository.findByUrlAndContentHash(url, hash);
+        if (existing.isPresent())
+            return new SourceImportReport("sleep-page", "UNCHANGED", existing.get().getId(), 0, List.of());
+        return tx.execute(st -> persist("sleep-page", url, hash, ex));
+    }
+
+    private SourceImportReport persist(String source, String url, String hash, PdfExtractionResult ex) {
         String raw = ex.blocks().stream().map(ExtractedBlockDraft::text).collect(Collectors.joining("\n\n"));
 
         SourceDocument sourceDocument = new SourceDocument();
@@ -105,7 +133,7 @@ public class SourceImportService {
         }
         carryOverDecisions(url, sourceDocument.getId(), created);
         feedingFactRepository.saveAll(created);
-        return new SourceImportReport("pdf", "UPDATED", sourceDocument.getId(), created.size(), ex.notes());
+        return new SourceImportReport(source, "UPDATED", sourceDocument.getId(), created.size(), ex.notes());
     }
 
     private void carryOverDecisions(String url, Long newDocId, List<FeedingFact> created) {

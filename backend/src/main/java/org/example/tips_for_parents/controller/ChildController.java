@@ -54,7 +54,7 @@ public class ChildController {
 
     private final ChildService service;
 
-    @Operation(summary = "Создать профиль ребёнка и сразу построить и сохранить персональный план (версия 1)")
+    @Operation(summary = "Создать профиль ребёнка и персональный план")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ChildDto create(@Valid @RequestBody CreateChildRequest r) {
@@ -67,30 +67,16 @@ public class ChildController {
         return ChildDto.of(service.get(id));
     }
 
-    @Operation(summary = "Изменить вид вскармливания (breast/formula) и/или объём молока в сутки; план пересчитывается")
+    @Operation(summary = "Изменить вид вскармливания и/или объём молока в сутки")
     @PutMapping("/{id}")
     public ChildDto update(@PathVariable UUID id, @Valid @RequestBody UpdateChildRequest r) {
         return ChildDto.of(service.updateProfile(id, r.feedingType(), r.milkMl()));
     }
 
-    @Operation(summary = "Добавить измерение массы; план пересчитывается с реальной массой вместо оценки по таблице 6.1")
+    @Operation(summary = "Добавить измерение массы")
     @PostMapping("/{id}/weights")
     @ResponseStatus(HttpStatus.CREATED)
     public void addWeight(@PathVariable UUID id, @Valid @RequestBody WeightRequest r) {
         service.addWeight(id, r.measuredOn(), r.weightKg());
-    }
-
-    @Operation(summary = "Статусы продуктов ребёнка")
-    @GetMapping("/{id}/products")
-    public List<ProductStatusDto> products(@PathVariable UUID id) {
-        return service.listProducts(id).stream().map(ProductStatusDto::of).toList();
-    }
-
-    @Operation(summary = "Родитель задаёт статус продукта: NOT_STARTED, INTRODUCING, INTRODUCED, PAUSED, EXCLUDED",
-            description = "productCode — ключ из GET /api/products. План пересчитывается: введённые продукты становятся привычными блюдами, "
-                    + "PAUSED/EXCLUDED убираются из дней, БЖУ пересчитывается без них.")
-    @PutMapping("/{id}/products")
-    public ProductStatusDto setProduct(@PathVariable UUID id, @Valid @RequestBody ProductStatusRequest r) {
-        return ProductStatusDto.of(service.setProductStatus(id, r.productCode(), r.status(), r.startedOn(), null));
     }
 }

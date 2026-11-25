@@ -27,7 +27,7 @@ public class ReactionController {
 
     private final ReactionService service;
 
-    @Operation(summary = "Описать реакцию ребёнка: разбор текста (ИИ или словарь) возвращает ПРЕДЛОЖЕНИЕ",
+    @Operation(summary = "Описать реакцию ребёнка: разбор текста возвращает ПРЕДЛОЖЕНИЕ",
             description = "План не меняется, пока родитель не подтвердит. productCode — необязательная подсказка (ключ из GET /api/products). "
                     + "Срочность — максимум из ответа ИИ и правил (затруднённое дыхание, отёк и т. п.). Это не диагноз.")
     @PostMapping
@@ -42,7 +42,7 @@ public class ReactionController {
         return service.list(childId);
     }
 
-    @Operation(summary = "Подтвердить действие (по умолчанию предложенное): продукт уходит на паузу, план пересчитывается")
+    @Operation(summary = "Подтвердить действие: продукт уходит на паузу, план пересчитывается")
     @PostMapping("/{reactionId}/confirm")
     public ReactionView confirm(@PathVariable UUID childId, @PathVariable UUID reactionId,
                                 @RequestBody(required = false) ConfirmRequest r) {
