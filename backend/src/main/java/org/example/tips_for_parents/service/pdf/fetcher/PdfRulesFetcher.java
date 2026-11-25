@@ -4,6 +4,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
+import org.example.tips_for_parents.model.enums.FactType;
 import org.example.tips_for_parents.model.pdf.RuleExtractionPattern;
 import org.example.tips_for_parents.model.pdf.FeedingRecommendationRule;
 import org.example.tips_for_parents.service.pdf.util.TextNormalizationUtils;
@@ -16,6 +17,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.capitalize;
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.clean;
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.sentenceAround;
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.takeSentences;
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.truncatedAt;
+
 @Component
 public class PdfRulesFetcher {
 
@@ -23,7 +30,6 @@ public class PdfRulesFetcher {
     private static final String END_MARKER = "Примерная схема назначения";
     private static final Pattern BULLET = Pattern.compile("[•●▪\\uF0B7]");
     private static final Pattern SENTENCE_END = Pattern.compile("[;.](?=\\s|$)");
-    private static final Pattern STOP = Pattern.compile("[.!?](?=\\s|$)");
     private static final Pattern MONTHS =
             Pattern.compile("(?iu)в возрасте\\s+(\\d+)(?:\\s*[–-]\\s*(\\d+))?\\s*мес");
     private static final Pattern SCHEDULE = Pattern.compile(
@@ -31,13 +37,13 @@ public class PdfRulesFetcher {
                     + "(\\d+)\\s+раза?/нед\\s+вместо\\s+(\\p{L}+)\\s+блюда");
 
     private static final List<RuleExtractionPattern> RULE_EXTRACTION_PATTERNS = List.of(
-            new RuleExtractionPattern("RULE", "Важно вводить прикорм", 2, null),
-            new RuleExtractionPattern("RULE", "Поэтому детям, получающим прикорм", 1, null),
-            new RuleExtractionPattern("RULE", "Вначале овощное пюре", 2, "овощ"),
-            new RuleExtractionPattern("RULE", "Прикорм на основе злаков", 1, "каш"),
-            new RuleExtractionPattern("RESTRICTION", "Неадаптированные кисломолочные напитки", 1, null),
-            new RuleExtractionPattern("RESTRICTION", "С 8 мес жизни в рацион вводится детский творог", 1, null),
-            new RuleExtractionPattern("RESTRICTION", "Цельное коровье молоко не может использоваться", 1, null));
+            new RuleExtractionPattern(FactType.RULE, "Важно вводить прикорм", 2, null),
+            new RuleExtractionPattern(FactType.RULE, "Поэтому детям, получающим прикорм", 1, null),
+            new RuleExtractionPattern(FactType.RULE, "Вначале овощное пюре", 2, "овощ"),
+            new RuleExtractionPattern(FactType.RULE, "Прикорм на основе злаков", 1, "каш"),
+            new RuleExtractionPattern(FactType.RESTRICTION, "Неадаптированные кисломолочные напитки", 1, null),
+            new RuleExtractionPattern(FactType.RESTRICTION, "С 8 мес жизни в рацион вводится детский творог", 1, null),
+            new RuleExtractionPattern(FactType.RESTRICTION, "Цельное коровье молоко не может использоваться", 1, null));
 
     public List<FeedingRecommendationRule> extract(byte[] pdf, int tablePage) throws IOException {
         try (PDDocument doc = Loader.loadPDF(pdf)) {
@@ -59,7 +65,7 @@ public class PdfRulesFetcher {
                 if (seg.isEmpty()) continue;
                 Matcher end = SENTENCE_END.matcher(seg);
                 String bullet = end.find() ? seg.substring(0, end.end()) : seg;   // отсекаем шум таблицы после пункта
-                feedingRecommendationRules.add(withMonths("RULE", capitalize(bullet.replaceFirst(";$", ".")), null));
+                feedingRecommendationRules.add(withMonths(FactType.RULE, capitalize(bullet.replaceFirst(";$", ".")), null));
             }
 
             for (RuleExtractionPattern ruleExtractionPattern : RULE_EXTRACTION_PATTERNS) {
@@ -74,13 +80,13 @@ public class PdfRulesFetcher {
                 if (sm.find()) {
                     String payload = "{\"timesPerWeek\":" + sm.group(3) + ",\"replaces\":\""
                             + TextNormalizationUtils.of(sm.group(4)) + "\"}";
-                    feedingRecommendationRules.add(new FeedingRecommendationRule("SCHEDULE", sched, TextNormalizationUtils.of(sm.group(2)),
+                    feedingRecommendationRules.add(new FeedingRecommendationRule(FactType.SCHEDULE, sched, TextNormalizationUtils.of(sm.group(2)),
                             Integer.parseInt(sm.group(1)), null, payload));
                 }
             }
 
             String optional = truncatedAt(text, "Соки, учитывая их незначительную пищевую ценность", "введения всех");
-            if (optional != null) feedingRecommendationRules.add(new FeedingRecommendationRule("OPTIONAL", optional, "сок", null, null, null));
+            if (optional != null) feedingRecommendationRules.add(new FeedingRecommendationRule(FactType.OPTIONAL, optional, "сок", null, null, null));
 
             if (feedingRecommendationRules.isEmpty()) throw new IllegalStateException("Правила не извлечены");
             return feedingRecommendationRules;
@@ -112,54 +118,4 @@ public class PdfRulesFetcher {
         return s.getTextForRegion("left") + "\n" + s.getTextForRegion("right");
     }
 
-    public String clean(String raw) {
-        StringBuilder sb = new StringBuilder();
-        for (String line : raw.split("\\R")) {
-            String l = line.strip().replaceFirst("^-(\\s+|$)", "");
-            if (!l.isBlank()) sb.append(l).append(' ');
-        }
-        return sb.toString()
-                .replace("\u00AD", "")
-                .replaceAll("(?<=\\p{L})-\\s+(?=\\p{Ll})", "")
-                .replaceAll("\\s+", " ")
-                .strip();
-    }
-
-    public String takeSentences(String text, String anchor, int n) {
-        int i = text.indexOf(anchor);
-        if (i < 0) return null;
-        Matcher m = STOP.matcher(text);
-        m.region(i, text.length());
-        int end = i;
-        for (int k = 0; k < n; k++) {
-            if (!m.find()) return null;
-            end = m.end();
-        }
-        return text.substring(i, end).strip();
-    }
-
-    public static String sentenceAround(String text, String phrase) {
-        int i = text.indexOf(phrase);
-        if (i < 0) return null;
-        int start = 0;
-        Matcher b = STOP.matcher(text);
-        b.region(0, i);
-        while (b.find()) start = b.end();
-        Matcher e = STOP.matcher(text);
-        e.region(i, text.length());
-        if (!e.find()) return null;
-        return text.substring(start, e.end()).strip();
-    }
-
-   public static String truncatedAt(String text, String anchor, String endPhrase) {
-        int i = text.indexOf(anchor);
-        if (i < 0) return null;
-        int j = text.indexOf(endPhrase, i);
-        if (j < 0) return null;
-        return text.substring(i, j + endPhrase.length()).strip() + "…";
-    }
-
-    private static String capitalize(String s) {
-        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
 }

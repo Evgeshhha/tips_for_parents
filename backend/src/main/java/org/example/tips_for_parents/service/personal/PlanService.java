@@ -3,6 +3,8 @@ package org.example.tips_for_parents.service.personal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.config.CardsProperties;
+import org.example.tips_for_parents.exception.ApiErrors;
 import org.example.tips_for_parents.model.card.ChildContext;
 import org.example.tips_for_parents.model.card.DayVariant;
 import org.example.tips_for_parents.model.card.MonthCard;
@@ -11,11 +13,9 @@ import org.example.tips_for_parents.model.enums.PlanStatus;
 import org.example.tips_for_parents.model.personal.PlanView;
 import org.example.tips_for_parents.repository.*;
 import org.example.tips_for_parents.service.card.MonthCardService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.example.tips_for_parents.service.card.ProductKeys;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -36,20 +36,15 @@ public class PlanService {
     private final WeightMeasurementRepository weights;
     private final ChildPlanRepository plans;
     private final MonthCardService cards;
+    private final CardsProperties props;
     private final ObjectMapper om;
-
-    @Value("${cards.first-month:4}")
-    private int firstMonth;
-    @Value("${cards.last-month:12}")
-    private int lastMonth;
 
     /** Новая версия плана; прежняя активная получает SUPERSEDED (история сохраняется). */
     @Transactional
     public PlanView regenerate(UUID childId, String reason) {
-        Child child = children.findById(childId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ребёнок не найден"));
+        Child child = children.getOrThrow(childId);
 
-        int startMonth = Ages.clamp(Ages.months(child.getBirthDate(), LocalDate.now()), firstMonth, lastMonth);
+        int startMonth = Ages.clamp(Ages.months(child.getBirthDate(), LocalDate.now()), props.firstMonth(), props.lastMonth());
 
         Set<String> introduced = new HashSet<>();
         Set<String> pending = new HashSet<>();
@@ -72,7 +67,7 @@ public class PlanService {
         int version = plans.findFirstByChildIdOrderByVersionDesc(childId).map(p -> p.getVersion() + 1).orElse(1);
 
         ChildPlan plan = new ChildPlan(child, version, reason);
-        for (int month = startMonth; month <= lastMonth; month++) {
+        for (int month = startMonth; month <= props.lastMonth(); month++) {
             // реальная масса известна на сегодня; для будущих месяцев алгоритм оценит массу по таблице 6.1
             Double weight = month == startMonth ? currentWeight : null;
             MonthCard card = cards.card(month, weight, child.getBirthWeightKg(), milk, milkMl, ctx);
@@ -80,7 +75,7 @@ public class PlanService {
             plan.addMonth(new ChildPlanMonth(month, summary(card)));
             int seq = 0;
             for (DayVariant v : card.exampleDay()) {
-                String key = v.newProduct() == null ? null : MonthCardService.productKey(v.newProduct());
+                String key = v.newProduct() == null ? null : ProductKeys.of(v.newProduct());
                 plan.addDay(new ChildPlanDay(month, seq++, key, om.valueToTree(v)));
             }
         }
@@ -91,7 +86,7 @@ public class PlanService {
     public PlanView getActive(UUID childId) {
         return plans.findFirstByChildIdAndStatus(childId, PlanStatus.ACTIVE)
                 .map(PlanView::of)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "У ребёнка пока нет плана"));
+                .orElseThrow(() -> ApiErrors.notFound("У ребёнка пока нет плана"));
     }
 
     private ObjectNode summary(MonthCard card) {

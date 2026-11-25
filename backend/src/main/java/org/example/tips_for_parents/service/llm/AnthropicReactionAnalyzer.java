@@ -1,6 +1,7 @@
 package org.example.tips_for_parents.service.llm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.example.tips_for_parents.config.LlmProperties;
 import org.example.tips_for_parents.model.enums.ReactionAction;
 import org.example.tips_for_parents.model.enums.Symptom;
 import org.example.tips_for_parents.model.enums.Urgency;

@@ -12,6 +12,8 @@ import org.example.tips_for_parents.repository.FeedingFactRepository;
 import org.example.tips_for_parents.service.source.AutoReviewService;
 import org.example.tips_for_parents.service.source.SourceImportService;
 import org.springframework.web.bind.annotation.*;
+import org.example.tips_for_parents.model.dto.AdminStatus;
+import org.example.tips_for_parents.model.dto.FactView;
 
 import java.util.*;
 
@@ -19,16 +21,6 @@ import java.util.*;
 @RequestMapping("/api/admin")
 @Tag(name = "Для админа: загрузка источника и подтвержение фактов")
 public class AdminController {
-
-    public record FactView(Long id, String type, String subject, String valueText, Integer valueMin, Integer valueMax,
-                           String sentence, ReviewStatus status, String confidence, String reviewedBy, String reviewNote) {
-        static FactView of(FeedingFact f) {
-            return new FactView(f.getId(), f.getFactType(), f.getSubject(), f.getValueText(), f.getValueMin(), f.getValueMax(), f.getSentence(),
-                    f.getReviewStatus(), f.getConfidence(), f.getReviewedBy(), f.getReviewNote());
-        }
-    }
-
-    public record Status(Map<String, Map<String, Long>> factsByTypeAndStatus, RefreshReport lastRefresh) {}
 
     private final SourceImportService ingest;
     private final AutoReviewService autoReview;
@@ -52,11 +44,11 @@ public class AdminController {
     @Operation(summary = "Состояние данных: сколько фактов каждого типа в каждом статусе + отчёт последней загрузки",
             description = "Если карточка пустая или без правил/норм — смотрите здесь, что извлеклось и что ждёт ревью.")
     @GetMapping("/status")
-    public Status status() {
+    public AdminStatus status() {
         Map<String, Map<String, Long>> counts = new TreeMap<>();
         for (Object[] row : facts.countByTypeAndStatus())
             counts.computeIfAbsent((String) row[0], k -> new TreeMap<>()).put(String.valueOf(row[1]), (Long) row[2]);
-        return new Status(counts, ingest.lastRefresh());
+        return new AdminStatus(counts, ingest.lastRefresh());
     }
 
     @Operation(summary = "Список фактов по статусу ревью")

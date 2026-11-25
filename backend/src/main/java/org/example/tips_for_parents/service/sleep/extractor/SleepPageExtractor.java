@@ -1,12 +1,14 @@
-package org.example.tips_for_parents.service.sleep;
+package org.example.tips_for_parents.service.sleep.extractor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.model.enums.FactType;
 import org.example.tips_for_parents.model.pdf.ExtractedBlockDraft;
 import org.example.tips_for_parents.model.pdf.ExtractedFactDraft;
 import org.example.tips_for_parents.model.pdf.PdfExtractionResult;
 import org.example.tips_for_parents.model.sleep.SleepRow;
+import org.example.tips_for_parents.service.common.JsonSupport;
+import org.example.tips_for_parents.service.pdf.util.TableText;
+import org.example.tips_for_parents.service.sleep.parser.SleepTableParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -27,15 +30,13 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class SleepPageExtractor {
-    public static final String TYPE_AGE = "SLEEP_AGE";
-    public static final String TYPE_TEXT = "SLEEP_TEXT";
     private static final String HIGH = "HIGH";
     private static final int MIN_PARAGRAPH = 40;
 
     private static final Pattern SLEEP_WORD = Pattern.compile(
             "(?iu)(?<![\\p{L}])(сон|сна|сну|сном|сне|спит|засып\\p{L}*)(?![\\p{L}])");
 
-    private final ObjectMapper om;
+    private final JsonSupport json;
 
     public PdfExtractionResult extract(byte[] html, String url) throws IOException {
         Document doc = Jsoup.parse(new ByteArrayInputStream(html), null, url);
@@ -51,12 +52,12 @@ public class SleepPageExtractor {
             throw new IllegalStateException("Таблица сна найдена, но ни одна строка не разобрана: " + parsed.skipped());
 
         blocks.add(new ExtractedBlockDraft(0, "Таблица режима сна и бодрствования (НМИЦ здоровья детей)",
-                tableRows.stream().map(r -> String.join(" | ", r).replaceAll("\\s+", " ")).collect(java.util.stream.Collectors.joining("\n"))));
+                TableText.of(tableRows)));
         for (SleepRow r : parsed.rows()) {
             String sentence = r.label() + ": дневной сон — " + r.data().napsText() + "; ночной сон — " + r.data().nightText()
                     + "; бодрствование — " + r.data().wakeText();
-            facts.add(new ExtractedFactDraft(0, TYPE_AGE, null, r.label(), r.monthFrom(), r.monthTo(), sentence,
-                    json(r.data()), HIGH));
+            facts.add(new ExtractedFactDraft(0, FactType.SLEEP_AGE, null, r.label(), r.monthFrom(), r.monthTo(), sentence,
+                    json.toJson(r.data()), HIGH));
         }
         notes.add("таблица сна: строк " + parsed.rows().size()
                 + (parsed.skipped().isEmpty() ? "" : ", пропущено: " + parsed.skipped()));
@@ -68,13 +69,13 @@ public class SleepPageExtractor {
             int b = blocks.size();
             blocks.add(new ExtractedBlockDraft(b, "Текст страницы о режиме сна (НМИЦ здоровья детей)", String.join("\n", paragraphs)));
             for (String p : paragraphs)
-                facts.add(new ExtractedFactDraft(b, TYPE_TEXT, null, null, null, null, p, null, HIGH));
+                facts.add(new ExtractedFactDraft(b, FactType.SLEEP_TEXT, null, null, null, null, p, null, HIGH));
             notes.add("абзацев о сне: " + paragraphs.size());
         }
         return new PdfExtractionResult(blocks, facts, notes);
     }
 
-    private static java.util.Optional<List<List<String>>> findSleepTable(Document doc) {
+    private static Optional<List<List<String>>> findSleepTable(Document doc) {
         for (Element table : doc.select("table")) {
             List<List<String>> rows = new ArrayList<>();
             for (Element tr : table.select("tr")) {
@@ -82,9 +83,9 @@ public class SleepPageExtractor {
                 for (Element c : tr.select("th, td")) cells.add(SleepTableParser.clean(c.text()));
                 rows.add(cells);
             }
-            if (rows.stream().anyMatch(SleepTableParser::isHeader)) return java.util.Optional.of(rows);
+            if (rows.stream().anyMatch(SleepTableParser::isHeader)) return Optional.of(rows);
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 
     /** Абзацы вне таблиц, где упоминается сон; усечённые копии («…») отбрасываются, если на странице есть полный абзац. */
@@ -109,11 +110,4 @@ public class SleepPageExtractor {
         return out;
     }
 
-    private String json(Object o) {
-        try {
-            return om.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }

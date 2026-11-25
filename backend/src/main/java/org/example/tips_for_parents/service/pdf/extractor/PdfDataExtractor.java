@@ -1,15 +1,16 @@
 package org.example.tips_for_parents.service.pdf.extractor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.model.enums.FactType;
 import org.example.tips_for_parents.model.pdf.*;
+import org.example.tips_for_parents.service.common.JsonSupport;
 import org.example.tips_for_parents.service.pdf.fetcher.PdfRulesFetcher;
 import org.example.tips_for_parents.service.pdf.fetcher.PdfTableFetcher;
 import org.example.tips_for_parents.service.pdf.parser.FeedingTableParser;
 import org.example.tips_for_parents.service.pdf.parser.NutrientTableParser;
 import org.example.tips_for_parents.service.pdf.parser.WeightGainParser;
 import org.example.tips_for_parents.service.pdf.util.NumberParsingUtils;
+import org.example.tips_for_parents.service.pdf.util.TableText;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class PdfDataExtractor {
     private final FeedingTableParser feedingParser;
     private final PdfRulesFetcher rulesFetcher;
     private final PdfMilkExtractor milkExtractor;
-    private final ObjectMapper om;
+    private final JsonSupport json;
 
     public PdfExtractionResult extract(byte[] pdf) throws IOException {
         List<ExtractedBlockDraft> blocks = new ArrayList<>();
@@ -44,8 +45,8 @@ public class PdfDataExtractor {
         for (var row : parsed.feedingTableRows()) {
             String sentence = row.label() + ": " + row.feedingAgeCells().stream()
                     .map(c -> c.age() + " мес — " + c.amount()).collect(Collectors.joining("; "));
-            facts.add(new ExtractedFactDraft(b0, "TABLE_AGE", null, row.label(), row.minAge(), null, sentence,
-                    json(Map.of("unit", parsed.unit() == null ? "" : parsed.unit(),
+            facts.add(new ExtractedFactDraft(b0, FactType.TABLE_AGE, null, row.label(), row.minAge(), null, sentence,
+                    json.toJson(Map.of("unit", parsed.unit() == null ? "" : parsed.unit(),
                             "cells", row.feedingAgeCells(), "footnotes", row.footnotes())), HIGH));
         }
         notes.add("таблица 5.1: строк " + parsed.feedingTableRows().size()
@@ -68,10 +69,10 @@ public class PdfDataExtractor {
             var norms = parse(tp.rows());
             int b = addBlock(blocks, "Приложение 1: нормы (стр. " + tp.pageNumber() + ")", tp.rows(), tp.noteText());
             for (var n : norms)
-                facts.add(new ExtractedFactDraft(b, "NORM", null, n.label(), n.monthFrom(), n.monthTo(),
+                facts.add(new ExtractedFactDraft(b, FactType.NORM, null, n.label(), n.monthFrom(), n.monthTo(),
                         n.label() + ": энергия " + NumberParsingUtils.fmt(n.energy()) + " ккал/кг, белки " + NumberParsingUtils.fmt(n.protein())
                                 + " г/кг, жиры " + NumberParsingUtils.fmt(n.fat()) + " г/кг, углеводы " + NumberParsingUtils.fmt(n.carbs()) + " г/кг в сутки",
-                        json(Map.of("energy", n.energy(), "protein", n.protein(), "fat", n.fat(), "carbs", n.carbs())),
+                        json.toJson(Map.of("energy", n.energy(), "protein", n.protein(), "fat", n.fat(), "carbs", n.carbs())),
                         HIGH));
             notes.add("нормы (приложение 1): " + norms.size());
         } catch (IOException | RuntimeException e) {
@@ -83,11 +84,11 @@ public class PdfDataExtractor {
             var items = NutrientTableParser.parse(tp.rows());
             int b = addBlock(blocks, "Таблица 7.4 (стр. " + tp.pageNumber() + ")", tp.rows(), tp.noteText());
             for (var n : items)
-                facts.add(new ExtractedFactDraft(b, "NUTRIENT", null, n.name(), null, null,
+                facts.add(new ExtractedFactDraft(b, FactType.NUTRIENT, null, n.name(), null, null,
                         n.name() + " (на " + NumberParsingUtils.fmt(n.basisAmount()) + " " + n.basisUnit() + "): белки " + NumberParsingUtils.fmt(n.protein())
                                 + " г; жиры " + NumberParsingUtils.fmt(n.fat()) + " г; углеводы " + NumberParsingUtils.fmt(n.carbs()) + " г; "
                                 + NumberParsingUtils.fmt(n.energy()) + " ккал",
-                        json(n), HIGH));
+                        json.toJson(n), HIGH));
             notes.add("пищевая ценность (таблица 7.4): " + items.size());
         } catch (IOException | RuntimeException e) {
             notes.add("таблица 7.4 не извлечена: " + e.getMessage());
@@ -98,9 +99,9 @@ public class PdfDataExtractor {
             var gains = WeightGainParser.parse(tp.rows());
             int b = addBlock(blocks, "Таблица 6.1 (стр. " + tp.pageNumber() + ")", tp.rows(), tp.noteText());
             for (var g : gains)
-                facts.add(new ExtractedFactDraft(b, "WEIGHT_GAIN", null, g.label(), g.monthFrom(), g.monthTo(),
+                facts.add(new ExtractedFactDraft(b, FactType.WEIGHT_GAIN, null, g.label(), g.monthFrom(), g.monthTo(),
                         g.label() + ": прибавка массы тела " + NumberParsingUtils.fmt(g.gramsPerDay()) + " г/день",
-                        json(Map.of("gramsPerDay", g.gramsPerDay())), HIGH));
+                        json.toJson(Map.of("gramsPerDay", g.gramsPerDay())), HIGH));
             notes.add("прибавки массы (таблица 6.1): " + gains.size());
         } catch (IOException | RuntimeException e) {
             notes.add("таблица 6.1 не извлечена: " + e.getMessage());
@@ -116,14 +117,14 @@ public class PdfDataExtractor {
                                         milk.milkVolumeLimits().stream().map(MilkVolumeLimit::sentence).distinct())
                                 .collect(Collectors.joining("\n")));
                 for (var c : milk.milkCompositions())
-                    facts.add(new ExtractedFactDraft(b, "MILK_COMPOSITION", c.kind(), c.label(), null, null,
+                    facts.add(new ExtractedFactDraft(b, FactType.MILK_COMPOSITION, c.kind(), c.label(), null, null,
                             c.label() + ": " + NumberParsingUtils.fmt(c.energy()) + " ккал, белки " + NumberParsingUtils.fmt(c.protein()) + " г, жиры "
                                     + NumberParsingUtils.fmt(c.fat()) + " г, углеводы " + NumberParsingUtils.fmt(c.carbs()) + " г",
-                            json(Map.of("energy", c.energy(), "protein", c.protein(), "fat", c.fat(), "carbs", c.carbs())),
+                            json.toJson(Map.of("energy", c.energy(), "protein", c.protein(), "fat", c.fat(), "carbs", c.carbs())),
                             HIGH));
                 for (var v : milk.milkVolumeLimits())
-                    facts.add(new ExtractedFactDraft(b, "MILK_VOLUME", null, v.label(), v.monthFrom(), v.monthTo(), v.sentence(),
-                            json(Map.of("maxMl", v.maxMl())), HIGH));
+                    facts.add(new ExtractedFactDraft(b, FactType.MILK_VOLUME, null, v.label(), v.monthFrom(), v.monthTo(), v.sentence(),
+                            json.toJson(Map.of("maxMl", v.maxMl())), HIGH));
                 notes.add("молоко/смесь: составов " + milk.milkCompositions().size() + ", границ объёма " + milk.milkVolumeLimits().size());
             }
         } catch (IOException | RuntimeException e) {
@@ -134,8 +135,7 @@ public class PdfDataExtractor {
     }
 
     private int addBlock(List<ExtractedBlockDraft> blocks, String heading, List<List<String>> rows, String note) {
-        String text = rows.stream().map(r -> String.join(" | ", r).replaceAll("\\s+", " "))
-                .collect(Collectors.joining("\n")) + (note == null || note.isBlank() ? "" : "\n" + note);
+        String text = TableText.of(rows) + (note == null || note.isBlank() ? "" : "\n" + note);
         return addBlock(blocks, heading, text);
     }
 
@@ -144,11 +144,4 @@ public class PdfDataExtractor {
         return blocks.size() - 1;
     }
 
-    private String json(Object o) {
-        try {
-            return om.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }

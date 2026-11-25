@@ -1,19 +1,18 @@
 package org.example.tips_for_parents.service.sleep;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.tips_for_parents.model.card.TextFact;
 import org.example.tips_for_parents.model.entity.FeedingFact;
+import org.example.tips_for_parents.model.enums.FactType;
 import org.example.tips_for_parents.model.enums.ReviewStatus;
 import org.example.tips_for_parents.model.sleep.SleepBand;
 import org.example.tips_for_parents.model.sleep.SleepBandData;
 import org.example.tips_for_parents.model.sleep.SleepCard;
 import org.example.tips_for_parents.repository.FeedingFactRepository;
-import org.springframework.http.HttpStatus;
+import org.example.tips_for_parents.service.common.JsonSupport;
+import org.example.tips_for_parents.service.common.MonthValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,7 +33,7 @@ public class SleepService {
             "Время укладывания и подъёма в источнике не указано — не показывается.");
 
     private final FeedingFactRepository repo;
-    private final ObjectMapper om;
+    private final JsonSupport json;
 
     @Transactional(readOnly = true)
     public SleepCard all() {
@@ -43,16 +42,14 @@ public class SleepService {
 
     @Transactional(readOnly = true)
     public SleepCard forMonth(int month) {
-        if (month < MIN_MONTH || month > MAX_MONTH)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Месяц должен быть от " + MIN_MONTH + " до " + MAX_MONTH);
+        MonthValidator.require(month, MIN_MONTH, MAX_MONTH);
         return build(month);
     }
 
     private SleepCard build(Integer month) {
         List<String> warnings = new ArrayList<>();
-        List<FeedingFact> ageFacts = repo.findByFactTypeAndReviewStatusOrderById(SleepPageExtractor.TYPE_AGE, ReviewStatus.APPROVED);
-        List<FeedingFact> textFacts = repo.findByFactTypeAndReviewStatusOrderById(SleepPageExtractor.TYPE_TEXT, ReviewStatus.APPROVED);
+        List<FeedingFact> ageFacts = repo.findByFactTypeAndReviewStatusOrderById(FactType.SLEEP_AGE, ReviewStatus.APPROVED);
+        List<FeedingFact> textFacts = repo.findByFactTypeAndReviewStatusOrderById(FactType.SLEEP_TEXT, ReviewStatus.APPROVED);
 
         List<SleepBand> bands = new ArrayList<>();
         for (FeedingFact f : ageFacts) {
@@ -60,12 +57,12 @@ public class SleepService {
                 warnings.add("Факт #" + f.getId() + " неполный и пропущен");
                 continue;
             }
-            try {
-                SleepBandData data = om.readValue(f.getPayload(), SleepBandData.class);
-                bands.add(new SleepBand(f.getValueText(), f.getValueMin(), f.getValueMax(), data, f.getSentence(), f.getId()));
-            } catch (JsonProcessingException e) {
-                warnings.add("Факт #" + f.getId() + " не удалось прочитать: " + e.getOriginalMessage());
+            SleepBandData data = json.readOrNull(f.getPayload(), SleepBandData.class);
+            if (data == null) {
+                warnings.add("Факт #" + f.getId() + " не удалось прочитать и пропущен");
+                continue;
             }
+            bands.add(new SleepBand(f.getValueText(), f.getValueMin(), f.getValueMax(), data, f.getSentence(), f.getId()));
         }
         bands.sort(Comparator.comparingInt(SleepBand::monthFrom).thenComparingInt(SleepBand::monthTo));
 

@@ -9,7 +9,6 @@ import org.example.tips_for_parents.model.enums.ProductStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 
-/** Статус одного продукта у одного ребёнка. productCode — ключ из MonthCardService.productKey(название строки таблицы 5.1). */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

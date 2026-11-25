@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.example.tips_for_parents.service.pdf.fetcher.PdfRulesFetcher.sentenceAround;
+import static org.example.tips_for_parents.service.pdf.util.PdfTextUtils.sentenceAround;
 
 @Component
 @RequiredArgsConstructor

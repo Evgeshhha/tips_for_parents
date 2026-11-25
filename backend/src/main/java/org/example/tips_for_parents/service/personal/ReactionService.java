@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.tips_for_parents.exception.ApiErrors;
 import org.example.tips_for_parents.model.entity.Child;
 import org.example.tips_for_parents.model.entity.ReactionReport;
 import org.example.tips_for_parents.model.enums.ProductStatus;
@@ -16,14 +17,13 @@ import org.example.tips_for_parents.model.personal.ReactionView;
 import org.example.tips_for_parents.repository.ChildProductRepository;
 import org.example.tips_for_parents.repository.ReactionReportRepository;
 import org.example.tips_for_parents.service.card.MonthCardService;
+import org.example.tips_for_parents.service.card.ProductKeys;
 import org.example.tips_for_parents.service.llm.AnthropicReactionAnalyzer;
 import org.example.tips_for_parents.service.llm.KeywordReactionAnalyzer;
 import org.example.tips_for_parents.service.llm.RedFlagRules;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -61,9 +61,9 @@ public class ReactionService {
         Set<String> allowed = cards.productCatalog().keySet();
         String hint = null;
         if (productCode != null && !productCode.isBlank()) {
-            hint = MonthCardService.productKey(productCode);
+            hint = ProductKeys.of(productCode);
             if (!allowed.contains(hint))
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Неизвестный продукт: " + productCode);
+                throw ApiErrors.badRequest("Неизвестный продукт: " + productCode);
         }
         Map<String, ProductStatus> statuses = new HashMap<>();
         products.findByChildId(childId).forEach(p -> statuses.put(p.getProductCode(), p.getStatus()));
@@ -99,7 +99,7 @@ public class ReactionService {
 
         if (action == ReactionAction.PAUSE_PRODUCT) {
             if (report.getProductCode() == null)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Для этой реакции не определён продукт");
+                throw ApiErrors.badRequest("Для этой реакции не определён продукт");
             childService.setProductStatus(childId, report.getProductCode(), ProductStatus.PAUSED, null,
                     "reaction: " + report.getProductCode());
         } else {
@@ -124,9 +124,9 @@ public class ReactionService {
 
     private ReactionReport proposed(UUID childId, UUID reportId) {
         ReactionReport r = reports.findByIdAndChildId(reportId, childId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Сообщение о реакции не найдено"));
+                .orElseThrow(() -> ApiErrors.notFound("Сообщение о реакции не найдено"));
         if (r.getStatus() != ReactionStatus.PROPOSED)
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Решение по этой реакции уже принято");
+            throw ApiErrors.conflict("Решение по этой реакции уже принято");
         return r;
     }
 

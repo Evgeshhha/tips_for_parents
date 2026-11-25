@@ -3,10 +3,9 @@ package org.example.tips_for_parents.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import org.example.tips_for_parents.model.request.ConfirmRequest;
+import org.example.tips_for_parents.model.request.ReactionRequest;
 import lombok.RequiredArgsConstructor;
-import org.example.tips_for_parents.model.enums.ReactionAction;
 import org.example.tips_for_parents.model.personal.ReactionView;
 import org.example.tips_for_parents.service.personal.ReactionService;
 import org.springframework.http.HttpStatus;
@@ -20,11 +19,6 @@ import java.util.UUID;
 @RequestMapping("/api/children/{childId}/reactions")
 @Tag(name = "Реакции на прикорм")
 public class ReactionController {
-
-    public record ReactionRequest(@NotBlank @Size(max = 2000) String text, String productCode) {}
-
-    public record ConfirmRequest(ReactionAction action) {}
-
     private final ReactionService service;
 
     @Operation(summary = "Описать реакцию ребёнка: разбор текста возвращает ПРЕДЛОЖЕНИЕ",

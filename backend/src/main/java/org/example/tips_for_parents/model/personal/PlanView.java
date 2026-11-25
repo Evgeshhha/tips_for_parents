@@ -1,6 +1,5 @@
 package org.example.tips_for_parents.model.personal;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.example.tips_for_parents.model.entity.ChildPlan;
 import org.example.tips_for_parents.model.entity.ChildPlanDay;
 import org.example.tips_for_parents.model.enums.PlanStatus;
@@ -14,12 +13,6 @@ import java.util.stream.Collectors;
 /** Персональный план: по месяцам — итоги (потребность, молоко, цель) и примерные дни (DayVariant как в карточке месяца). */
 public record PlanView(UUID id, int version, PlanStatus status, String reason, Instant generatedAt,
                        List<MonthView> months) {
-
-    public record MonthView(int month, JsonNode summary, List<DayView> days) {
-    }
-
-    public record DayView(int seq, String newProductCode, JsonNode day) {
-    }
 
     public static PlanView of(ChildPlan p) {
         Map<Integer, List<DayView>> byMonth = p.getDays().stream().collect(Collectors.groupingBy(

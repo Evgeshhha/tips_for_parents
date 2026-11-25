@@ -1,6 +1,7 @@
 package org.example.tips_for_parents.service.personal;
 
 import lombok.RequiredArgsConstructor;
+import org.example.tips_for_parents.exception.ApiErrors;
 import org.example.tips_for_parents.model.entity.Child;
 import org.example.tips_for_parents.model.entity.ChildProduct;
 import org.example.tips_for_parents.model.entity.WeightMeasurement;
@@ -10,10 +11,9 @@ import org.example.tips_for_parents.repository.ChildProductRepository;
 import org.example.tips_for_parents.repository.ChildRepository;
 import org.example.tips_for_parents.repository.WeightMeasurementRepository;
 import org.example.tips_for_parents.service.card.MonthCardService;
-import org.springframework.http.HttpStatus;
+import org.example.tips_for_parents.service.card.ProductKeys;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,8 +38,7 @@ public class ChildService {
 
     @Transactional(readOnly = true)
     public Child get(UUID id) {
-        return children.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ребёнок не найден"));
+        return children.getOrThrow(id);
     }
 
     @Transactional
@@ -62,9 +61,9 @@ public class ChildService {
     @Transactional
     public ChildProduct setProductStatus(UUID id, String productCode, ProductStatus status, LocalDate startedOn, String reason) {
         Child child = get(id);
-        String key = MonthCardService.productKey(productCode);
+        String key = ProductKeys.of(productCode);
         if (!cards.productCatalog().containsKey(key))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Неизвестный продукт: " + productCode);
+            throw ApiErrors.badRequest("Неизвестный продукт: " + productCode);
 
         ChildProduct cp = products.findByChildIdAndProductCode(id, key)
                 .map(existing -> {

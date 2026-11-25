@@ -3,19 +3,15 @@ package org.example.tips_for_parents.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
-import org.example.tips_for_parents.model.entity.Child;
-import org.example.tips_for_parents.model.entity.ChildProduct;
-import org.example.tips_for_parents.model.enums.FeedingType;
-import org.example.tips_for_parents.model.enums.ProductStatus;
+import org.example.tips_for_parents.model.dto.ChildDto;
+import org.example.tips_for_parents.model.request.CreateChildRequest;
+import org.example.tips_for_parents.model.request.UpdateChildRequest;
+import org.example.tips_for_parents.model.request.WeightRequest;
 import org.example.tips_for_parents.service.personal.ChildService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -23,35 +19,6 @@ import java.util.UUID;
 @RequestMapping("/api/children")
 @Tag(name = "Профиль ребёнка")
 public class ChildController {
-
-    public record CreateChildRequest(@Size(max = 100) String nickname,
-                                     @NotNull @PastOrPresent LocalDate birthDate,
-                                     @DecimalMin("1.0") @DecimalMax("7.0") Double birthWeightKg,
-                                     @NotNull FeedingType feedingType,
-                                     @Min(0) @Max(2000) Integer milkMl) {}
-
-    public record UpdateChildRequest(FeedingType feedingType, @Min(0) @Max(2000) Integer milkMl) {}
-
-    public record WeightRequest(@NotNull @PastOrPresent LocalDate measuredOn,
-                                @DecimalMin("2.0") @DecimalMax("20.0") double weightKg) {}
-
-    public record ProductStatusRequest(@NotBlank String productCode, @NotNull ProductStatus status, LocalDate startedOn) {}
-
-    public record ChildDto(UUID id, String nickname, LocalDate birthDate, int ageMonths, Double birthWeightKg,
-                           FeedingType feedingType, Integer milkMl) {
-        static ChildDto of(Child c) {
-            return new ChildDto(c.getId(), c.getNickname(), c.getBirthDate(),
-                    (int) Period.between(c.getBirthDate(), LocalDate.now()).toTotalMonths(),
-                    c.getBirthWeightKg(), c.getFeedingType(), c.getMilkMl());
-        }
-    }
-
-    public record ProductStatusDto(String productCode, ProductStatus status, LocalDate startedOn) {
-        static ProductStatusDto of(ChildProduct p) {
-            return new ProductStatusDto(p.getProductCode(), p.getStatus(), p.getStartedOn());
-        }
-    }
-
     private final ChildService service;
 
     @Operation(summary = "Создать профиль ребёнка и персональный план")

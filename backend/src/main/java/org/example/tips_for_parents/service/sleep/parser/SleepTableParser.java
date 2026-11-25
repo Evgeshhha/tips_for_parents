@@ -1,5 +1,6 @@
-package org.example.tips_for_parents.service.sleep;
+package org.example.tips_for_parents.service.sleep.parser;
 
+import org.example.tips_for_parents.model.sleep.ParsedSleepTable;
 import org.example.tips_for_parents.model.sleep.SleepBandData;
 import org.example.tips_for_parents.model.sleep.SleepRow;
 
@@ -18,9 +19,6 @@ public final class SleepTableParser {
     private SleepTableParser() {
     }
 
-    public record Parsed(List<SleepRow> rows, List<String> skipped) {
-    }
-
     private static final String NUM = "(\\d+(?:[.,]\\d+)?)";
     private static final String RANGE = NUM + "(?:\\s*[-\\u2013\\u2014]\\s*" + NUM + ")?";
 
@@ -37,7 +35,7 @@ public final class SleepTableParser {
         return j.contains("возраст") && j.contains("дневного сна") && j.contains("ночной сон") && j.contains("бодрствования");
     }
 
-    public static Parsed parse(List<List<String>> rows) {
+    public static ParsedSleepTable parse(List<List<String>> rows) {
         List<SleepRow> out = new ArrayList<>();
         List<String> skipped = new ArrayList<>();
         boolean headerSeen = false;
@@ -52,7 +50,7 @@ public final class SleepTableParser {
             if (row.isPresent()) out.add(row.get());
             else skipped.add(String.join(" | ", cells));
         }
-        return new Parsed(out, skipped);
+        return new ParsedSleepTable(out, skipped);
     }
 
     static Optional<SleepRow> parseRow(List<String> c) {
@@ -95,7 +93,7 @@ public final class SleepTableParser {
         return m.group(hi) != null ? num(m, hi) : num(m, lo);
     }
 
-    static String clean(String s) {
+    public static String clean(String s) {
         if (s == null) return "";
         return s.replace("\u00AD", "").replace("\u200B", "").replace('\u00A0', ' ').replaceAll("\\s+", " ").trim();
     }

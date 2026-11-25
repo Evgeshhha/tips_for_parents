@@ -1,9 +1,8 @@
-package org.example.tips_for_parents.service.llm;
+package org.example.tips_for_parents.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
-/** Подхватывается @ConfigurationPropertiesScan из TipsForParentsApplication. */
 @ConfigurationProperties(prefix = "llm")
 public record LlmProperties(
         @DefaultValue("false") boolean enabled,

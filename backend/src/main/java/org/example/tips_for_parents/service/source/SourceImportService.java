@@ -2,24 +2,23 @@ package org.example.tips_for_parents.service.source;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.tips_for_parents.exception.ApiErrors;
 import org.example.tips_for_parents.model.entity.FeedingFact;
 import org.example.tips_for_parents.model.entity.SourceBlock;
 import org.example.tips_for_parents.model.entity.SourceDocument;
 import org.example.tips_for_parents.model.enums.ReviewStatus;
 import org.example.tips_for_parents.model.pdf.ExtractedBlockDraft;
 import org.example.tips_for_parents.model.pdf.PdfExtractionResult;
-import org.example.tips_for_parents.model.report.RefreshReport;
 import org.example.tips_for_parents.model.report.SourceImportReport;
+import org.example.tips_for_parents.model.report.RefreshReport;
 import org.example.tips_for_parents.repository.FeedingFactRepository;
 import org.example.tips_for_parents.repository.SourceBlockRepository;
 import org.example.tips_for_parents.repository.SourceDocumentRepository;
 import org.example.tips_for_parents.service.pdf.extractor.PdfDataExtractor;
-import org.example.tips_for_parents.service.sleep.SleepPageExtractor;
+import org.example.tips_for_parents.service.sleep.extractor.SleepPageExtractor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -54,11 +53,6 @@ public class SourceImportService {
                 runSource("sleep-page", sleepUrl, () -> ingestSleepPage(sleepUrl)));
         last = new RefreshReport(reports, autoReviewService.run());
         return last;
-    }
-
-    @FunctionalInterface
-    private interface SourceTask {
-        SourceImportReport run() throws Exception;
     }
 
     private SourceImportReport runSource(String name, String url, SourceTask task) {
@@ -159,10 +153,10 @@ public class SourceImportService {
 
     public FeedingFact review(long id, ReviewStatus status, String note) {
         if (status == ReviewStatus.SUPERSEDED)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SUPERSEDED выставляется системой");
+            throw ApiErrors.badRequest("SUPERSEDED выставляется системой");
         return tx.execute(st -> {
             FeedingFact f = feedingFactRepository.findById(id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Факт не найден: " + id));
+                    .orElseThrow(() -> ApiErrors.notFound("Факт не найден: " + id));
             f.setReviewStatus(status);
             f.setReviewedBy("MANUAL");
             f.setReviewNote(note);
