@@ -21,19 +21,54 @@ const icons = {
   12: month12,
 };
 
+
 export default function MonthSelector({
   months,
   selectedMonth,
   onSelect,
 }) {
-  // Объединяем 4-й и 5-й месяцы в один пункт меню.
-  const menuMonths = months
-    .filter((item) => item.month !== 5)
-    .map((item) =>
-      item.month === 4
-        ? { ...item, label: '4–5 месяц', selectMonth: 4 }
-        : { ...item, label: `${item.month} месяц`, selectMonth: item.month }
-    );
+  // Определяем, какой календарь отображается:
+  // обычный или персональный.
+  const isPersonal = months?.some(
+    (item) => Array.isArray(item.days)
+  );
+
+  // Формируем пункты меню.
+  const menuMonths = isPersonal
+    ? [
+        ...new Map(
+          months.map((item) => {
+            const groupMonth = item.month === 5 ? 4 : item.month;
+
+            return [
+              groupMonth,
+              {
+                ...item,
+                label:
+                  groupMonth === 4
+                    ? '4–5 месяц'
+                    : `${groupMonth} месяц`,
+                selectMonth: groupMonth,
+              },
+            ];
+          })
+        ).values(),
+      ].sort((a, b) => a.selectMonth - b.selectMonth)
+    : months
+        .filter((item) => item.month !== 5)
+        .map((item) =>
+          item.month === 4
+            ? {
+                ...item,
+                label: '4–5 месяц',
+                selectMonth: 4,
+              }
+            : {
+                ...item,
+                label: `${item.month} месяц`,
+                selectMonth: item.month,
+              }
+        );
 
   return (
     <div className="month-selector">
@@ -41,14 +76,15 @@ export default function MonthSelector({
 
       <div className="month-list">
         {menuMonths.map((item) => {
-          const isSelected =
-            item.month === 4
+          const isSelected = isPersonal
+            ? selectedMonth === item.selectMonth
+            : item.month === 4
               ? selectedMonth === 4 || selectedMonth === 5
               : selectedMonth === item.month;
 
           return (
             <button
-              key={item.month}
+              key={item.selectMonth}
               className={`month-option ${
                 isSelected ? 'selected' : ''
               }`}

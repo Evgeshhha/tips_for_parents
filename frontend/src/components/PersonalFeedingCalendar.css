@@ -1,0 +1,518 @@
+/* ===== Основной блок ===== */
+
+.personal-calendar {
+  width: 100%;
+  min-width: 0;
+  color: #49382e;
+}
+
+.personal-calendar-intro {
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid #e8d9c9;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #fff8ef, #f7eee4);
+}
+
+.personal-calendar-intro h3 {
+  margin: 0 0 6px;
+  color: #62452f;
+  font: 700 19px 'Playfair Display', serif;
+}
+
+.personal-calendar-intro p {
+  margin: 0;
+  color: #806b58;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ===== Легенда статусов ===== */
+
+.personal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 18px 0 24px;
+}
+
+.personal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #665346;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.personal-dot {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.personal-dot.not-started {
+  background: #b7aaa0;
+}
+
+.personal-dot.introducing {
+  background: #e5a05e;
+}
+
+.personal-dot.introduced {
+  background: #8dbb82;
+}
+
+.personal-dot.paused {
+  background: #aaa39d;
+}
+
+.personal-dot.excluded {
+  background: #d97870;
+}
+
+/* ===== Список дней ===== */
+
+.personal-day-list {
+  display: grid;
+  gap: 20px;
+}
+
+.personal-day-card {
+  overflow: hidden;
+  border: 1px solid #e5d8c9;
+  border-radius: 18px;
+  background: #fffdfa;
+  box-shadow: 0 5px 18px rgba(75, 52, 35, 0.07);
+}
+
+/* ===== Заголовок этапа ===== */
+
+.personal-day-header {
+  padding: 17px 19px;
+  border-bottom: 1px solid #eee2d6;
+  background: #f7efe7;
+}
+
+.personal-day-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.personal-day-number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #8d715b;
+  color: white;
+  font: 700 18px 'Playfair Display', serif;
+}
+
+.personal-day-caption {
+  display: block;
+  margin-bottom: 4px;
+  color: #a17d62;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.personal-day-title h3 {
+  margin: 0;
+  color: #583d2c;
+  font: 800 18px/1.4 'Nunito', sans-serif;
+  overflow-wrap: anywhere;
+}
+
+/* ===== Примечание ===== */
+
+.personal-day-note {
+  display: flex;
+  gap: 9px;
+  margin: 14px 17px 0;
+  padding: 12px 14px;
+  border: 1px solid #e8dfc7;
+  border-radius: 10px;
+  background: #fff8e8;
+  color: #745c39;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.personal-day-note span {
+  flex-shrink: 0;
+}
+
+/* ===== Блюда ===== */
+
+.personal-dishes {
+  display: grid;
+  gap: 11px;
+  padding: 15px;
+}
+
+.personal-dish {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 13px;
+  border: 1px solid transparent;
+  border-left-width: 4px;
+  border-radius: 12px;
+}
+
+/* Не введено */
+
+.personal-dish.not-started {
+  border-color: #e1d9d2;
+  border-left-color: #b7aaa0;
+  background: #f7f4f1;
+}
+
+/* Вводится */
+
+.personal-dish.introducing {
+  border-color: #f2dfc8;
+  border-left-color: #e5a05e;
+  background: #fff7ed;
+}
+
+/* В рационе */
+
+.personal-dish.introduced {
+  border-color: #dce9d6;
+  border-left-color: #8dbb82;
+  background: #f1f7ee;
+}
+
+/* Пауза */
+
+.personal-dish.paused {
+  border-color: #e1dfdc;
+  border-left-color: #aaa39d;
+  background: #f2f1ef;
+}
+
+/* Исключено */
+
+.personal-dish.excluded {
+  border-color: #f0d7d4;
+  border-left-color: #d97870;
+  background: #fff2f0;
+}
+
+/* ===== Изображения ===== */
+
+.personal-dish-image {
+  flex: 0 0 125px;
+  width: 125px;
+  height: 110px;
+  overflow: hidden;
+  border: 1px solid #dfcdbb;
+  border-radius: 12px;
+  background: white;
+}
+
+.personal-dish-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.personal-dish-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== Название и статус ===== */
+
+.personal-dish-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.personal-dish-heading > strong {
+  color: #49392e;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.personal-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.personal-status.not-started {
+  background: #e9e4de;
+  color: #786858;
+}
+
+.personal-status.introducing {
+  background: #ffecd8;
+  color: #a65c20;
+}
+
+.personal-status.introduced {
+  background: #e1efdc;
+  color: #477344;
+}
+
+.personal-status.paused {
+  background: #e3e1df;
+  color: #68625e;
+}
+
+.personal-status.excluded {
+  background: #f8dcd9;
+  color: #a43e37;
+}
+
+/* ===== Дата и количество ===== */
+
+.personal-started-date {
+  margin: 5px 0 0;
+  color: #8b725d;
+  font-size: 11px;
+}
+
+.personal-amount {
+  margin-top: 7px;
+  color: #76685d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.personal-amount strong {
+  color: #49382d;
+}
+
+.personal-amount span {
+  color: #8c796b;
+}
+
+/* ===== Пищевая ценность ===== */
+
+.personal-nutrients {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.personal-nutrient {
+  min-width: 0;
+  padding-left: 7px;
+  border-left: 2px solid rgba(120, 100, 80, 0.2);
+}
+
+.personal-nutrient span {
+  display: block;
+  color: #78695d;
+  font-size: 11px;
+}
+
+.personal-nutrient strong {
+  display: block;
+  margin-top: 3px;
+  color: #49382d;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.personal-nutrient small {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* ===== Дополнительная информация ===== */
+
+.personal-table-note,
+.personal-amount-policy,
+.personal-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.personal-table-note {
+  color: #806b58;
+}
+
+.personal-amount-policy {
+  color: #8a613d;
+}
+
+.personal-hint {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #5f4b37;
+}
+
+.personal-addon {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #fff3c5;
+  color: #70581e;
+  font-size: 12px;
+}
+
+.personal-addon strong {
+  white-space: nowrap;
+}
+
+/* ===== Итоговые показатели ===== */
+
+.personal-summary {
+  margin: 0 15px 13px;
+  padding: 15px;
+  border: 1px solid #e7dccc;
+  border-radius: 12px;
+  background: #f8f4ee;
+}
+
+.personal-summary h4 {
+  margin: 0 0 12px;
+  color: #604633;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.personal-summary .personal-nutrients {
+  margin-top: 0;
+}
+
+/* ===== Нет данных ===== */
+
+.personal-no-data {
+  margin: 0 15px 15px;
+  padding: 13px 15px;
+  border: 1px solid #f0e4b6;
+  border-radius: 10px;
+  background: #fff8df;
+  color: #70581e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.personal-no-data ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+/* ===== Пустой календарь ===== */
+
+.personal-empty {
+  padding: 35px 18px;
+  border: 1px dashed #d8c6b4;
+  border-radius: 16px;
+  color: #7c6a5a;
+  text-align: center;
+}
+
+.personal-empty > span {
+  font-size: 34px;
+}
+
+.personal-empty h3 {
+  margin: 8px 0;
+  font: 700 18px 'Playfair Display', serif;
+}
+
+.personal-empty p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ===== Адаптив ===== */
+
+@media (max-width: 760px) {
+  .personal-calendar-intro {
+    padding: 15px;
+  }
+
+  .personal-day-header {
+    padding: 14px;
+  }
+
+  .personal-day-title {
+    gap: 10px;
+  }
+
+  .personal-day-number {
+    width: 39px;
+    height: 39px;
+    font-size: 15px;
+  }
+
+  .personal-day-title h3 {
+    font-size: 16px;
+  }
+
+  .personal-legend {
+    gap: 9px 13px;
+  }
+
+  .personal-legend span {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 560px) {
+  .personal-dish {
+    flex-direction: column;
+  }
+
+  .personal-dish-image {
+    width: 100%;
+    height: 160px;
+    flex-basis: auto;
+  }
+
+  .personal-dish-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .personal-nutrients {
+    gap: 4px;
+  }
+
+  .personal-nutrient {
+    padding-left: 4px;
+  }
+
+  .personal-nutrient span {
+    font-size: 10px;
+  }
+
+  .personal-nutrient strong {
+    font-size: 12px;
+  }
+
+  .personal-summary {
+    margin-right: 10px;
+    margin-left: 10px;
+    padding: 12px;
+  }
+}

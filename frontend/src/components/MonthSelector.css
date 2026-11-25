@@ -356,3 +356,80 @@
     font-size: 10px;
   }
 }
+
+
+/* Компактный выбор месяцев на мобильных устройствах */
+@media (max-width: 760px) {
+  .month-selector {
+    padding: 12px;
+  }
+
+  .month-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 100px));
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .month-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 82px;
+    box-sizing: border-box;
+    padding: 9px 5px;
+
+    gap: 5px;
+    border-radius: 13px;
+    text-align: center;
+  }
+
+  .month-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .month-option-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .month-option-copy strong {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .month-option-copy small {
+    display: none;
+  }
+
+  .month-chevron {
+    display: none;
+  }
+}
+
+/* На совсем узких экранах */
+@media (max-width: 360px) {
+  .month-list {
+    grid-template-columns: repeat(3, minmax(0, 88px));
+    gap: 7px;
+  }
+
+  .month-option {
+    min-height: 74px;
+    padding: 7px 3px;
+  }
+
+  .month-icon {
+    width: 28px;
+    height: 28px;
+  }
+}

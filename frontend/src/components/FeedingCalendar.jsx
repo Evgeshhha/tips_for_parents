@@ -4,32 +4,26 @@ import './FeedingCalendar.css';
 export default function FeedingCalendar({ monthData }) {
   const days = monthData?.exampleDay ?? [];
 
-  const daysLabel =
-    days.length === 1
-      ? 'карточка'
-      : days.length < 5
-        ? 'карточки'
-        : 'карточек';
-
   return (
     <section className="feeding-calendar" id="calendar">
-
       <div className="legend">
         <span>
           <i className="legend-dot new-dot" />
-          {' '}Новый продукт
+          Новый продукт
         </span>
+
         <span>
           <i className="legend-dot addition-dot" />
-          {' '}Добавка
+          Добавка
         </span>
+
         <span>
           <i className="legend-dot continuation-dot" />
-          {' '}Уже введённый продукт
+          Уже введённый продукт
         </span>
       </div>
 
-      {days.length ? (
+      {days.length > 0 ? (
         <div className="day-card-list">
           {days.map((day, index) => (
             <ProductCard
@@ -43,7 +37,9 @@ export default function FeedingCalendar({ monthData }) {
         <div className="empty-state">
           <span>🌱</span>
           <h3>На этот месяц нет примеров дней</h3>
-          <p>В данных нет поля exampleDay с продуктами для отображения.</p>
+          <p>
+            В данных нет поля exampleDay с продуктами для отображения.
+          </p>
         </div>
       )}
     </section>
